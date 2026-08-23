@@ -1,22 +1,56 @@
 {% extends 'base.html' %}
 {% block title %}วิชาของฉัน{% endblock %}
 {% block content %}
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
-  <div>
-    <h3 class="fw-bold mb-0">วิชาของฉัน</h3>
-    <p class="text-secondary mb-0 small">จัดการรายวิชา บทเรียน วิดีโอ และแบบทดสอบ</p>
+
+<div class="dash-hero">
+  <div class="dash-hero-text">
+    <span class="dash-hero-date">{% now "j F Y" %}</span>
+    <h2 class="dash-hero-title">ยินดีต้อนรับกลับมา, {{ user.first_name|default:user.username }}!</h2>
+    <p class="dash-hero-sub">จัดการรายวิชา บทเรียน วิดีโอ และแบบทดสอบของคุณได้ที่นี่</p>
+    <div class="dash-hero-actions">
+      <a href="{% url 'courses:course_create' %}" class="btn btn-light btn-sm fw-semibold"><i class="bi bi-plus-lg"></i> สร้างรายวิชาใหม่</a>
+      <a href="{% url 'exams:pretest_import' %}" class="btn btn-outline-light btn-sm fw-semibold"><i class="bi bi-clipboard2-check"></i> เพิ่มแบบทดสอบก่อนเรียน</a>
+    </div>
   </div>
-  <div class="d-flex gap-2">
-    <a href="{% url 'exams:pretest_import' %}" class="btn btn-outline-primary"><i class="bi bi-clipboard2-check"></i> เพิ่มแบบทดสอบก่อนเรียน</a>
-    <a href="{% url 'courses:course_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> สร้างรายวิชาใหม่</a>
+  <div class="dash-hero-art">
+    <i class="bi bi-mortarboard-fill"></i>
   </div>
 </div>
 
-<div class="row g-4">
+<div class="row g-3 dash-stats">
+  <div class="col-md-4">
+    <div class="dash-stat-card">
+      <div class="dash-stat-icon"><i class="bi bi-journal-bookmark-fill"></i></div>
+      <div class="dash-stat-value">{{ courses|length }}</div>
+      <div class="dash-stat-label">รายวิชาทั้งหมด</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="dash-stat-card dash-stat-card-highlight">
+      <div class="dash-stat-icon"><i class="bi bi-people-fill"></i></div>
+      <div class="dash-stat-value" data-stat="students">0</div>
+      <div class="dash-stat-label">นักเรียนทั้งหมด</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="dash-stat-card">
+      <div class="dash-stat-icon"><i class="bi bi-play-btn-fill"></i></div>
+      <div class="dash-stat-value" data-stat="lessons">0</div>
+      <div class="dash-stat-label">บทเรียนทั้งหมด</div>
+    </div>
+  </div>
+</div>
+
+<div class="dash-section-head">
+  <h3 class="fw-bold mb-0">วิชาของฉัน</h3>
+  <span class="text-secondary small">{{ courses|length }} รายวิชา</span>
+</div>
+
+<div class="row g-4" id="dashCourseGrid">
   {% for course in courses %}
   {% cycle '1' '2' '3' '4' '5' '6' as covernum silent %}
   {% cycle 'bi-diagram-3-fill' 'bi-code-slash' 'bi-gear-wide-connected' 'bi-signpost-split-fill' 'bi-window-stack' 'bi-briefcase-fill' as covericon silent %}
-  <div class="col-md-6 col-lg-4">
+  <div class="col-md-6 col-lg-4 dash-course-item" data-title="{{ course.title|lower }}" data-lessons="{{ course.lesson_count }}" data-students="{{ course.student_count }}">
     <div class="card card-course h-100">
       <div class="course-cover cover-{{ covernum }}">
         <span class="unit-pill">{% if course.unit_number %}หน่วยที่ {{ course.unit_number }}{% else %}หน่วยที่ {{ forloop.counter }}{% endif %}</span>
@@ -44,5 +78,10 @@
     </div>
   </div>
   {% endfor %}
+  <div class="col-12 d-none" id="dashCourseEmptySearch">
+    <div class="card p-5 text-center">
+      <p class="text-secondary mb-0">ไม่พบรายวิชาที่ค้นหา</p>
+    </div>
+  </div>
 </div>
 {% endblock %}

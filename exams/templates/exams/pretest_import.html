@@ -1,15 +1,9 @@
 {% extends 'base.html' %}
 {% block title %}นำเข้าแบบทดสอบก่อนเรียน{% endblock %}
+{% block heading %}<i class="bi bi-clipboard2-check-fill"></i> นำเข้าแบบทดสอบก่อนเรียน / หลังเรียน{% endblock %}
 {% block content %}
 <a href="{% url 'courses:teacher_dashboard' %}" class="text-decoration-none small text-secondary"><i class="bi bi-arrow-left"></i> วิชาของฉัน</a>
-
-<div class="d-flex align-items-center gap-3 mt-2 mb-4">
-  <div class="quiz-kind-icon"><i class="bi bi-clipboard2-check"></i></div>
-  <div>
-    <h3 class="fw-bold mb-0">นำเข้าแบบทดสอบก่อนเรียน / หลังเรียน</h3>
-    <p class="text-secondary mb-0 small">อ่านคำถามจาก pretest.docx แล้วนำเข้าให้แต่ละหน่วยทีละครั้ง หรือคัดลอกชุดเดียวกันไปเป็นแบบทดสอบหลังเรียนได้</p>
-  </div>
-</div>
+<p class="text-secondary mb-4 small mt-2">อ่านคำถามจาก pretest.docx แล้วนำเข้าให้แต่ละหน่วยทีละครั้ง หรือคัดลอกชุดเดียวกันไปเป็นแบบทดสอบหลังเรียนได้</p>
 
 {% if not docx_exists %}
 <div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> ไม่พบไฟล์ <code>media/pretest/pretest.docx</code> กรุณาวางไฟล์นี้ก่อนจึงจะนำเข้าได้</div>

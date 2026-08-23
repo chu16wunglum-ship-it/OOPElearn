@@ -1,18 +1,11 @@
 {% extends 'base.html' %}
 {% block title %}จัดการ{{ kind_label }} - {{ lesson.title }}{% endblock %}
+{% block heading %}{{ kind_label }}{% endblock %}
 {% block content %}
 <a href="{% url 'courses:course_detail' lesson.course.pk %}" class="text-decoration-none small text-secondary"><i class="bi bi-arrow-left"></i> {{ lesson.course.title }}</a>
+<p class="text-secondary mb-4 small mt-2">บทเรียน: {{ lesson.title }} &middot; <span class="fw-semibold text-body">{{ questions|length }}</span> ข้อ</p>
 
-<div class="d-flex flex-wrap justify-content-between align-items-center mt-2 mb-4 gap-3">
-  <div class="d-flex align-items-center gap-3">
-    <div class="quiz-kind-icon">
-      <i class="bi {% if kind == 'pretest' %}bi-clipboard2-check{% elif kind == 'invideo' %}bi-camera-reels{% else %}bi-clipboard2-data{% endif %}"></i>
-    </div>
-    <div>
-      <h3 class="fw-bold mb-0">{{ kind_label }}</h3>
-      <p class="text-secondary mb-0 small">บทเรียน: {{ lesson.title }} &middot; <span class="fw-semibold text-body">{{ questions|length }}</span> ข้อ</p>
-    </div>
-  </div>
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
   <a href="{% url 'exams:question_add' lesson.id kind %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> เพิ่มคำถาม</a>
 </div>
 

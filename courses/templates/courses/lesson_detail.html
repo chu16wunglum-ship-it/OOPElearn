@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}{{ lesson.title }}{% endblock %}
+{% block heading %}{{ lesson.title }}{% endblock %}
 {% block content %}
 <a href="{% if is_teacher_owner %}{% url 'courses:course_detail' course.pk %}{% else %}{% url 'courses:student_dashboard' %}{% endif %}" class="text-decoration-none small text-secondary">
   <i class="bi bi-arrow-left"></i> {{ course.title }}
 </a>
-<h3 class="fw-bold mt-2 mb-1">{{ lesson.title }}</h3>
-<p class="text-secondary mb-4">{{ lesson.description }}</p>
+<p class="text-secondary mb-4 mt-2">{{ lesson.description }}</p>
 
 {% if is_teacher_owner %}
 <div class="alert alert-warning py-2"><i class="bi bi-eye"></i> โหมดดูตัวอย่างสำหรับครู &mdash; ระบบจะไม่บันทึกความก้าวหน้าหรือคำตอบของคุณ</div>

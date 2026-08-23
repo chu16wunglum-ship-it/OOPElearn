@@ -1,15 +1,9 @@
 {% extends 'base.html' %}
 {% block title %}รายชื่อนักเรียน - {{ course.title }}{% endblock %}
+{% block heading %}<i class="bi bi-person-check-fill"></i> มอบหมายนักเรียน{% endblock %}
 {% block content %}
 <a href="{% url 'courses:course_detail' course.pk %}" class="text-decoration-none small text-secondary"><i class="bi bi-arrow-left"></i> {{ course.title }}</a>
-
-<div class="d-flex align-items-center gap-3 mt-2 mb-4">
-  <div class="quiz-kind-icon"><i class="bi bi-people"></i></div>
-  <div>
-    <h3 class="fw-bold mb-0">มอบหมายนักเรียน</h3>
-    <p class="text-secondary mb-0 small">เลือกนักเรียนที่จะลงทะเบียนในวิชา <strong>{{ course.title }}</strong></p>
-  </div>
-</div>
+<p class="text-secondary mb-4 small mt-2">เลือกนักเรียนที่จะลงทะเบียนในวิชา <strong>{{ course.title }}</strong></p>
 
 <div class="card p-4">
   {% if not all_students %}

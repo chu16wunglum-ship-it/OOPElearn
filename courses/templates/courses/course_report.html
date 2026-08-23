@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}ผลสรุป - {{ course.title }}{% endblock %}
+{% block heading %}<i class="bi bi-graph-up-fill"></i> ผลสรุปนักเรียน{% endblock %}
 {% block content %}
-<h3 class="fw-bold mb-1"><i class="bi bi-graph-up text-primary"></i> ผลสรุปนักเรียน</h3>
 <p class="text-secondary mb-4">รายวิชา <strong>{{ course.title }}</strong> &middot; {{ rows|length }} นักเรียน &middot; {{ lessons|length }} บทเรียน</p>
 
 <div class="card">
