@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}จัดการ{{ kind_label }} - {{ lesson.title }}{% endblock %}
+{% block content %}
+<a href="{% url 'courses:course_detail' lesson.course.pk %}" class="text-decoration-none small text-secondary"><i class="bi bi-arrow-left"></i> {{ lesson.course.title }}</a>
+<div class="d-flex flex-wrap justify-content-between align-items-center mt-2 mb-4 gap-2">
+  <div>
+    <h3 class="fw-bold mb-0">{{ kind_label }}</h3>
+    <p class="text-secondary mb-0 small">บทเรียน: {{ lesson.title }}</p>
+  </div>
+  <a href="{% url 'exams:question_add' lesson.id kind %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> เพิ่มคำถาม</a>
+</div>
+
+{% if wizard_step %}
+<div class="alert alert-light border py-2 small d-flex justify-content-between align-items-center">
+  <span><i class="bi bi-signpost-split"></i> ขั้นตอนที่ {{ wizard_step }}/{{ wizard_total }} ของการตั้งค่าบทเรียนใหม่</span>
+  {% if next_kind %}
+  <a href="{% url 'exams:quiz_manage' lesson.id next_kind %}" class="btn btn-sm btn-outline-primary">ถัดไป: {{ next_kind_label }} <i class="bi bi-arrow-right"></i></a>
+  {% else %}
+  <a href="{% url 'courses:course_detail' lesson.course.pk %}" class="btn btn-sm btn-success">เสร็จสิ้น กลับไปที่วิชา <i class="bi bi-check-lg"></i></a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if kind == 'invideo' %}
+<div class="alert alert-info py-2 small"><i class="bi bi-info-circle"></i> คำถามเหล่านี้จะปรากฏขึ้นระหว่างที่นักเรียนดูวิดีโอ ณ วินาทีที่กำหนด</div>
+{% endif %}
+
+<div class="d-flex flex-column gap-2">
+  {% for question in questions %}
+  <div class="card p-3">
+    <div class="d-flex justify-content-between align-items-start gap-2">
+      <div>
+        <div class="fw-semibold">{{ forloop.counter }}. {{ question.text }}
+          {% if question.is_true_false %}<span class="badge badge-soft">ถูก/ผิด</span>{% else %}<span class="badge badge-soft">เลือกตอบ</span>{% endif %}
+        </div>
+        {% if kind == 'invideo' %}<div class="small text-secondary mb-2"><i class="bi bi-clock"></i> วินาทีที่ {{ question.trigger_time }}</div>{% endif %}
+        <ul class="list-unstyled small mb-0 mt-2">
+          {% for choice in question.choices.all %}
+          <li class="{% if choice.is_correct %}text-success fw-semibold{% endif %}">
+            {% if choice.is_correct %}<i class="bi bi-check-circle-fill"></i>{% else %}<i class="bi bi-circle text-muted"></i>{% endif %}
+            {{ choice.text }}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="d-flex gap-2 flex-shrink-0">
+        <a href="{% url 'exams:question_edit' question.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+        <a href="{% url 'exams:question_delete' question.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="card p-4 text-center text-secondary">ยังไม่มีคำถามใน{{ kind_label }} คลิก "เพิ่มคำถาม" เพื่อเริ่มต้น</div>
+  {% endfor %}
+</div>
+{% endblock %}

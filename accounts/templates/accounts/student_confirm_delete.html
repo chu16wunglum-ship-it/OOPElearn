@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}ลบนักเรียน{% endblock %}
+{% block content %}
+<div class="card p-4" style="max-width:480px;margin:0 auto;">
+  <h4 class="fw-bold mb-3 text-danger"><i class="bi bi-exclamation-triangle"></i> ยืนยันการลบนักเรียน</h4>
+  <p>คุณต้องการลบ <strong>{{ student.first_name }} {{ student.last_name }}</strong> ({{ student.username }}) ใช่หรือไม่?
+  ข้อมูลการทำแบบทดสอบและความก้าวหน้าทั้งหมดจะถูกลบด้วย</p>
+  <form method="post" class="d-flex gap-2">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">ลบนักเรียน</button>
+    <a href="{% url 'accounts:student_list' %}" class="btn btn-outline-secondary">ยกเลิก</a>
+  </form>
+</div>
+{% endblock %}

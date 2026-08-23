@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}ผลการเรียน - {{ student.first_name }}{% endblock %}
+{% block content %}
+<a href="{% url 'courses:course_report' course.pk %}" class="text-decoration-none small text-secondary"><i class="bi bi-arrow-left"></i> กลับไปหน้าผลสรุป</a>
+<h3 class="fw-bold mt-2 mb-1"><i class="bi bi-person-badge text-primary"></i> {{ student.first_name }} {{ student.last_name }}</h3>
+<p class="text-secondary mb-4">รายวิชา {{ course.title }} &middot; รหัสนักเรียน {{ student.student_code|default:'-' }}</p>
+
+<div class="card p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-2 gap-2 flex-wrap">
+    <h6 class="fw-semibold mb-0"><i class="bi bi-stars text-primary"></i> สรุปผลการเรียนด้วย AI</h6>
+    <button type="button" class="btn btn-sm btn-outline-primary" data-ai-summary-btn
+            data-url="{% url 'courses:student_ai_summary' course.pk student.pk %}" data-target="ai-student-summary-result">
+      ขอสรุปผลจาก AI
+    </button>
+  </div>
+  <div id="ai-student-summary-result" class="small"></div>
+</div>
+
+{% if results %}
+<div class="card p-4 mb-4">
+  <h6 class="fw-semibold mb-3"><i class="bi bi-bar-chart text-primary"></i> ภาพรวมผลการเรียนแต่ละบทเรียน</h6>
+  <div style="position:relative; height:320px;">
+    <canvas id="progress-chart" role="img" aria-label="กราฟแท่งเปรียบเทียบคะแนนก่อนเรียน เปอร์เซ็นต์การดูวิดีโอ คะแนนระหว่างวิดีโอ และคะแนนหลังเรียน ของแต่ละบทเรียน"></canvas>
+  </div>
+</div>
+{{ chart_data|json_script:"chart-data" }}
+{% endif %}
+
+<div class="d-flex flex-column gap-3">
+  {% for entry in results %}
+  <div class="card p-4">
+    <h5 class="fw-semibold mb-3">{{ forloop.counter }}. {{ entry.lesson.title }}</h5>
+    <div class="row g-3">
+      <div class="col-md-3">
+        <div class="stat-pill">
+          <div class="label">แบบทดสอบก่อนเรียน</div>
+          <div class="value">{% if entry.pretest %}{{ entry.pretest.score }}%{% else %}-{% endif %}</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-pill">
+          <div class="label">ดูวิดีโอถึง</div>
+          <div class="value">{% if entry.video %}{{ entry.video.percent_watched }}%{% else %}0%{% endif %}</div>
+          {% if entry.video.completed %}<span class="badge badge-soft done mt-1">ดูจบแล้ว</span>{% endif %}
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-pill">
+          <div class="label">คำถามระหว่างวิดีโอ</div>
+          <div class="value">
+            {% if entry.invideo and entry.invideo.total %}{{ entry.invideo.correct }}/{{ entry.invideo.total }}{% else %}-{% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-pill">
+          <div class="label">แบบทดสอบหลังเรียน</div>
+          <div class="value">{% if entry.posttest %}{{ entry.posttest.score }}%{% else %}-{% endif %}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="card p-4 text-center text-secondary">วิชานี้ยังไม่มีบทเรียน</div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/ai-summary.js' %}" defer></script>
+{% if results %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{% static 'js/student-progress-chart.js' %}" defer></script>
+{% endif %}
+{% endblock %}

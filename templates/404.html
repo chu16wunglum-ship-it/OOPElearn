@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}ไม่พบหน้านี้{% endblock %}
+{% block content %}
+<div class="card p-5 text-center mx-auto" style="max-width:560px;">
+  <div class="fs-1 text-primary mb-3"><i class="bi bi-compass"></i></div>
+  <h3 class="fw-bold mb-2">ไม่พบหน้าที่คุณต้องการ</h3>
+  <p class="text-secondary mb-4">ลิงก์อาจไม่ถูกต้อง หรือเนื้อหานี้อาจถูกลบไปแล้ว</p>
+  {% if user.is_authenticated %}
+    <a href="{% url 'dashboard' %}" class="btn btn-primary" style="width:fit-content;margin:0 auto;">
+      <i class="bi bi-house"></i> กลับไปหน้าหลักของฉัน
+    </a>
+  {% else %}
+    <a href="{% url 'home' %}" class="btn btn-primary" style="width:fit-content;margin:0 auto;">
+      <i class="bi bi-house"></i> กลับไปหน้าแรก
+    </a>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}บทเรียนของฉัน{% endblock %}
+{% block content %}
+<h3 class="fw-bold mb-1">บทเรียนของฉัน</h3>
+<p class="text-secondary mb-4">รายวิชาที่คุณลงทะเบียน ({{ enrollments|length }} วิชา)</p>
+
+<div class="row g-4">
+  {% for enrollment in enrollments %}
+  {% with course=enrollment.course %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card card-course h-100">
+      <div class="course-cover">
+        {% if course.cover_image_url %}<img src="{{ course.cover_image_url }}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:1rem 1rem 0 0;">{% else %}<i class="bi bi-journal-code"></i>{% endif %}
+      </div>
+      <div class="card-body">
+        <h5 class="fw-semibold mb-1">{{ course.title }}</h5>
+        <p class="text-secondary small mb-3">{{ course.description|truncatewords:16|default:'' }}</p>
+        <span class="badge badge-soft mb-3"><i class="bi bi-play-btn"></i> {{ course.lesson_count }} บทเรียน</span>
+        <div class="list-group list-group-flush">
+          {% for lesson in course.lessons.all %}
+          <a href="{% url 'courses:lesson_detail' lesson.pk %}" class="list-group-item list-group-item-action px-0 d-flex align-items-center gap-2">
+            <span class="lesson-order" style="width:1.7rem;height:1.7rem;font-size:0.8rem;">{{ forloop.counter }}</span>
+            <span>{{ lesson.title }}</span>
+          </a>
+          {% empty %}
+          <p class="text-secondary small mb-0">ครูยังไม่ได้เพิ่มบทเรียน</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endwith %}
+  {% empty %}
+  <div class="col-12">
+    <div class="card p-5 text-center text-secondary">คุณยังไม่ได้ลงทะเบียนวิชาใด กรุณาติดต่อครูผู้สอน</div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

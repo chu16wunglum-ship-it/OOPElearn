@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ lesson.title }}{% endblock %}
+{% block content %}
+<a href="{% if is_teacher_owner %}{% url 'courses:course_detail' course.pk %}{% else %}{% url 'courses:student_dashboard' %}{% endif %}" class="text-decoration-none small text-secondary">
+  <i class="bi bi-arrow-left"></i> {{ course.title }}
+</a>
+<h3 class="fw-bold mt-2 mb-1">{{ lesson.title }}</h3>
+<p class="text-secondary mb-4">{{ lesson.description }}</p>
+
+{% if is_teacher_owner %}
+<div class="alert alert-warning py-2"><i class="bi bi-eye"></i> โหมดดูตัวอย่างสำหรับครู &mdash; ระบบจะไม่บันทึกความก้าวหน้าหรือคำตอบของคุณ</div>
+{% endif %}
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    {% if pretest_quiz %}
+    <div class="card p-3 mb-3 d-flex flex-row align-items-center justify-content-between flex-wrap gap-2">
+      <div>
+        <div class="fw-semibold"><i class="bi bi-clipboard2-check text-primary"></i> แบบทดสอบก่อนเรียน</div>
+        {% if pretest_attempt %}
+          <div class="small text-secondary">คะแนนล่าสุด {{ pretest_attempt.score }}%</div>
+        {% else %}
+          <div class="small text-secondary">กรุณาทำแบบทดสอบนี้ก่อนเริ่มดูวิดีโอ</div>
+        {% endif %}
+      </div>
+      {% if is_enrolled_student %}
+      <a href="{% url 'exams:quiz_take' lesson.id 'pretest' %}" class="btn btn-sm {% if pretest_attempt %}btn-outline-primary{% else %}btn-primary{% endif %}">
+        {% if pretest_attempt %}ทำอีกครั้ง{% else %}เริ่มทำแบบทดสอบ{% endif %}
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="video-wrap mb-2">
+      <div class="ratio ratio-16x9">
+        {% if lesson.youtube_id %}
+          <div id="yt-player"></div>
+        {% else %}
+          <div class="d-flex align-items-center justify-content-center text-white">ยังไม่ได้ตั้งค่าลิงก์วิดีโอ</div>
+        {% endif %}
+      </div>
+      {% if video_locked %}
+      <div class="video-locked-overlay">
+        <i class="bi bi-lock-fill fs-1"></i>
+        <div>
+          <div class="fw-semibold fs-5">กรุณาทำแบบทดสอบก่อนเรียนก่อน</div>
+          <div class="small">เพื่อปลดล็อกวิดีโอบทเรียนนี้</div>
+        </div>
+        <a href="{% url 'exams:quiz_take' lesson.id 'pretest' %}" class="btn btn-warning">ทำแบบทดสอบก่อนเรียน</a>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if is_enrolled_student %}
+    <div class="d-flex align-items-center gap-2 mb-4">
+      <div class="progress flex-grow-1" style="height: 0.6rem;">
+        <div id="video-progress-bar" class="progress-bar" role="progressbar" style="width: {{ progress.percent_watched }}%;" aria-valuenow="{{ progress.percent_watched }}" aria-valuemin="0" aria-valuemax="100"></div>
+      </div>
+      <span class="small text-secondary" id="video-progress-text">{{ progress.percent_watched }}%</span>
+    </div>
+    {% endif %}
+
+    {% if posttest_quiz %}
+    <div class="card p-3 mb-3 d-flex flex-row align-items-center justify-content-between flex-wrap gap-2">
+      <div>
+        <div class="fw-semibold"><i class="bi bi-clipboard2-data text-primary"></i> แบบทดสอบหลังเรียน</div>
+        {% if posttest_attempt %}
+          <div class="small text-secondary">คะแนนล่าสุด {{ posttest_attempt.score }}%</div>
+        {% elif posttest_locked %}
+          <div class="small text-secondary" id="posttest-locked-banner">ดูวิดีโอให้ครบอย่างน้อย 90% เพื่อปลดล็อก</div>
+          <div class="small text-success d-none" id="posttest-unlocked-banner"><i class="bi bi-unlock"></i> ปลดล็อกแล้ว</div>
+        {% endif %}
+      </div>
+      {% if is_enrolled_student and not posttest_locked %}
+      <a href="{% url 'exams:quiz_take' lesson.id 'posttest' %}" class="btn btn-sm {% if posttest_attempt %}btn-outline-primary{% else %}btn-primary{% endif %}">
+        {% if posttest_attempt %}ทำอีกครั้ง{% else %}เริ่มทำแบบทดสอบ{% endif %}
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card p-3">
+      <h6 class="fw-semibold mb-2">เกี่ยวกับบทเรียนนี้</h6>
+      <ul class="list-unstyled small text-secondary mb-0 d-flex flex-column gap-2">
+        <li><i class="bi bi-clipboard2-check"></i> แบบทดสอบก่อนเรียน: {% if pretest_quiz %}{{ pretest_quiz.question_count }} ข้อ{% else %}ไม่มี{% endif %}</li>
+        <li><i class="bi bi-camera-reels"></i> คำถามระหว่างวิดีโอ: {% if invideo_quiz %}{{ invideo_quiz.question_count }} ข้อ{% else %}ไม่มี{% endif %}</li>
+        <li><i class="bi bi-clipboard2-data"></i> แบบทดสอบหลังเรียน: {% if posttest_quiz %}{{ posttest_quiz.question_count }} ข้อ{% else %}ไม่มี{% endif %}</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<button type="button" id="ai-widget-toggle" class="ai-widget-toggle" title="ถาม AI ผู้ช่วยเกี่ยวกับบทเรียนนี้">
+  <i class="bi bi-stars"></i>
+</button>
+
+<div id="ai-widget-panel" class="ai-widget-panel d-none">
+  <div class="ai-widget-header">
+    <span><i class="bi bi-robot"></i> AI ผู้ช่วยประจำบทเรียน</span>
+    <button type="button" id="ai-widget-close" class="btn-close btn-close-white"></button>
+  </div>
+  <div id="ai-messages" class="ai-messages">
+    <p class="text-secondary small mb-0">ถามคำถามเกี่ยวกับเนื้อหาบทเรียนนี้ได้เลย เช่น "OOP คืออะไร"</p>
+  </div>
+  <form id="ai-form" class="ai-widget-form">
+    <input type="text" id="ai-text-input" class="form-control" placeholder="พิมพ์คำถาม..." maxlength="1000" required>
+    <button type="submit" class="btn btn-primary flex-shrink-0"><i class="bi bi-send"></i></button>
+  </form>
+</div>
+
+<button type="button" id="chat-widget-toggle" class="chat-widget-toggle" title="ถาม-ตอบเกี่ยวกับบทเรียนนี้">
+  <i class="bi bi-chat-dots-fill"></i>
+</button>
+
+<div id="chat-widget-panel" class="chat-widget-panel d-none">
+  <div class="chat-widget-header">
+    <span><i class="bi bi-chat-dots"></i> ถาม-ตอบเกี่ยวกับบทเรียนนี้</span>
+    <button type="button" id="chat-widget-close" class="btn-close btn-close-white"></button>
+  </div>
+  <div id="board-messages" class="board-messages">
+    {% for message in board_messages %}
+    <div class="board-msg {% if message.author.is_teacher %}teacher{% endif %}" data-id="{{ message.id }}">
+      <div class="board-msg-meta">
+        <span class="fw-semibold">{{ message.author.first_name|default:message.author.username }}</span>
+        {% if message.author.is_teacher %}<span class="badge role-badge role-teacher">ครู</span>{% endif %}
+        <span class="text-secondary">{{ message.created_at|date:"d/m/Y H:i" }}</span>
+      </div>
+      <div class="board-msg-text">{{ message.text|linebreaksbr }}</div>
+    </div>
+    {% empty %}
+    <p id="board-empty-hint" class="text-secondary small mb-0">ยังไม่มีข้อความ เริ่มถามคำถามเกี่ยวกับบทเรียนนี้ได้เลย</p>
+    {% endfor %}
+  </div>
+  <form id="board-form" class="chat-widget-form">
+    <input type="text" id="board-text-input" class="form-control" placeholder="พิมพ์คำถามหรือข้อความ..." maxlength="2000" required>
+    <button type="submit" class="btn btn-primary flex-shrink-0"><i class="bi bi-send"></i></button>
+  </form>
+</div>
+
+{{ invideo_questions|json_script:"invideo-questions-data" }}
+{% endblock %}
+
+{% block modals %}
+<div class="modal fade" id="invideoModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content quiz-question-card">
+      <div class="modal-header border-0">
+        <h5 class="modal-title"><i class="bi bi-patch-question text-primary"></i> คำถามระหว่างวิดีโอ</h5>
+      </div>
+      <div class="modal-body">
+        <p id="invideo-question-text" class="fw-semibold"></p>
+        <div id="invideo-choices"></div>
+        <div id="invideo-feedback" class="alert d-none"></div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" id="invideo-submit-btn" class="btn btn-primary">ส่งคำตอบ</button>
+        <button type="button" id="invideo-continue-btn" class="btn btn-success d-none">ดูวิดีโอต่อ</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.LESSON_CONFIG = {
+    videoId: "{{ lesson.youtube_id|escapejs }}",
+    invideoQuestions: JSON.parse(document.getElementById('invideo-questions-data').textContent),
+    answerUrl: {% if is_enrolled_student %}"{% url 'exams:invideo_answer' lesson.id %}"{% else %}null{% endif %},
+    progressUrl: {% if is_enrolled_student %}"{% url 'courses:update_video_progress' lesson.pk %}"{% else %}null{% endif %},
+    boardUrl: "{% url 'courses:lesson_board' lesson.pk %}",
+    aiChatUrl: "{% url 'courses:lesson_ai_ask' lesson.pk %}"
+  };
+</script>
+<script src="{% static 'js/lesson-video.js' %}" defer></script>
+<script src="{% static 'js/lesson-board.js' %}" defer></script>
+<script src="{% static 'js/lesson-ai-chat.js' %}" defer></script>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}เพิ่มนักเรียน{% endblock %}
+{% block content %}
+<div class="card p-4" style="max-width:560px;margin:0 auto;">
+  <h4 class="fw-bold mb-3"><i class="bi bi-person-plus text-primary"></i> เพิ่มนักเรียนใหม่</h4>
+  <form method="post">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-6 mb-3">
+        <label class="form-label">ชื่อ</label>
+        {{ form.first_name }}
+      </div>
+      <div class="col-6 mb-3">
+        <label class="form-label">นามสกุล</label>
+        {{ form.last_name }}
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">ชื่อผู้ใช้</label>
+      {{ form.username }}
+      {% if form.username.errors %}<div class="text-danger small">{{ form.username.errors|join:', ' }}</div>{% endif %}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">รหัสนักเรียน (ไม่บังคับ)</label>
+      {{ form.student_code }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">รหัสผ่าน</label>
+      {{ form.password }}
+    </div>
+    {% if courses %}
+    <div class="mb-3">
+      <label class="form-label">ลงทะเบียนในวิชา (ไม่บังคับ)</label>
+      <select name="course" class="form-control">
+        <option value="">-- ไม่ระบุตอนนี้ --</option>
+        {% for c in courses %}<option value="{{ c.pk }}">{{ c.title }}</option>{% endfor %}
+      </select>
+    </div>
+    {% endif %}
+    <button type="submit" class="btn btn-primary w-100">บันทึก</button>
+  </form>
+  <p class="text-center text-secondary small mt-3 mb-0">
+    ต้องการเพิ่มหลายคนพร้อมกัน?
+    <a href="{% url 'accounts:student_bulk_add' %}">เพิ่มด้วยไฟล์ Excel หรือพิมพ์รายชื่อ</a>
+  </p>
+</div>
+{% endblock %}

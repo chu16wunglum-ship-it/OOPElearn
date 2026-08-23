@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}เข้าสู่ระบบ{% endblock %}
+{% block content %}
+<div class="card auth-card p-4">
+  <h4 class="fw-bold mb-1"><i class="bi bi-box-arrow-in-right text-primary"></i> เข้าสู่ระบบ</h4>
+  <p class="text-secondary small mb-4">สำหรับครูผู้สอนและนักเรียน</p>
+  {% if form.errors %}
+    <div class="alert alert-danger py-2">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</div>
+  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label">ชื่อผู้ใช้</label>
+      <input type="text" name="username" class="form-control" autofocus required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">รหัสผ่าน</label>
+      <input type="password" name="password" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary w-100">เข้าสู่ระบบ</button>
+  </form>
+  <p class="text-center small text-secondary mt-3 mb-0">
+    ยังไม่มีบัญชีครู? <a href="{% url 'accounts:register_teacher' %}">สมัครที่นี่</a><br>
+    <span class="text-muted">นักเรียนใช้บัญชีที่ครูสร้างให้เข้าสู่ระบบ</span>
+  </p>
+</div>
+{% endblock %}

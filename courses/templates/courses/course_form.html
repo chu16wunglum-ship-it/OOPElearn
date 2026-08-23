@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}{% if is_new %}สร้างรายวิชา{% else %}แก้ไขรายวิชา{% endif %}{% endblock %}
+{% block content %}
+<div class="card p-4" style="max-width:640px;margin:0 auto;">
+  <h4 class="fw-bold mb-3">{% if is_new %}<i class="bi bi-plus-lg text-primary"></i> สร้างรายวิชาใหม่{% else %}<i class="bi bi-pencil text-primary"></i> แก้ไขรายวิชา{% endif %}</h4>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label">{{ form.title.label }}</label>
+      {{ form.title }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">{{ form.description.label }}</label>
+      {{ form.description }}
+    </div>
+
+    <label class="form-label d-block mb-1">รูปปกวิชา (ไม่บังคับ) &mdash; เลือกได้ 1 ช่องทาง</label>
+    <div class="mb-2">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-upload"></i></span>
+        {{ form.cover_image }}
+      </div>
+      {% if course.cover_image %}<div class="form-text">ไฟล์ปัจจุบัน: <a href="{{ course.cover_image.url }}" target="_blank">{{ course.cover_image.name }}</a></div>{% endif %}
+    </div>
+    <div class="text-center text-secondary small mb-2">หรือ</div>
+    <div class="mb-3">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+        {{ form.cover_url }}
+      </div>
+      <div class="form-text">ถ้าอัปโหลดไฟล์ไว้ด้วย ระบบจะใช้ไฟล์ที่อัปโหลดก่อนเสมอ</div>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">บันทึก</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}ผลคะแนน - {{ kind_label }}{% endblock %}
+{% block content %}
+<a href="{% url 'courses:lesson_detail' lesson.pk %}" class="text-decoration-none small text-secondary"><i class="bi bi-arrow-left"></i> {{ lesson.title }}</a>
+<h3 class="fw-bold mt-2 mb-1">{{ kind_label }}</h3>
+<p class="text-secondary mb-4">บทเรียน: {{ lesson.title }}</p>
+
+<div class="card p-4 mb-4 text-center">
+  <div class="text-secondary small mb-1">คะแนนของคุณ</div>
+  <div class="display-6 fw-bold text-primary">{{ attempt.score }}%</div>
+  <div class="text-secondary small">ตอบถูก {{ attempt.correct_count }} จาก {{ review|length }} ข้อ</div>
+</div>
+
+<div class="card p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-2 gap-2 flex-wrap">
+    <h6 class="fw-semibold mb-0"><i class="bi bi-stars text-primary"></i> สรุปผลด้วย AI</h6>
+    <button type="button" class="btn btn-sm btn-outline-primary" data-ai-summary-btn
+            data-url="{% url 'exams:attempt_ai_summary' attempt.pk %}" data-target="ai-summary-result-{{ attempt.pk }}">
+      ขอสรุปผลจาก AI
+    </button>
+  </div>
+  <div id="ai-summary-result-{{ attempt.pk }}" class="small"></div>
+</div>
+
+<div class="d-flex flex-column gap-3">
+  {% for item in review %}
+  <div class="quiz-question-card">
+    <p class="fw-semibold">{{ forloop.counter }}. {{ item.question.text }}</p>
+    {% for choice in item.question.choices.all %}
+    <div class="small mb-1 {% if choice.is_correct %}text-success fw-semibold{% elif item.chosen_choice and choice.id == item.chosen_choice.id %}text-danger{% endif %}">
+      {% if choice.is_correct %}<i class="bi bi-check-circle-fill"></i>
+      {% elif item.chosen_choice and choice.id == item.chosen_choice.id %}<i class="bi bi-x-circle-fill"></i>
+      {% else %}<i class="bi bi-circle text-muted"></i>{% endif %}
+      {{ choice.text }}
+      {% if item.chosen_choice and choice.id == item.chosen_choice.id %} <span class="badge badge-soft">คำตอบของคุณ</span>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/ai-summary.js' %}" defer></script>
+{% endblock %}

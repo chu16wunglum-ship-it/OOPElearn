@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}{% if is_new %}เพิ่มคำถาม{% else %}แก้ไขคำถาม{% endif %}{% endblock %}
+{% block content %}
+<div class="card p-4" style="max-width:640px;margin:0 auto;">
+  <h4 class="fw-bold mb-1">{% if is_new %}เพิ่มคำถาม{% else %}แก้ไขคำถาม{% endif %}</h4>
+  <p class="text-secondary small mb-3">{{ kind_label }} &middot; {{ lesson.title }}</p>
+  <form method="post" id="question-form">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label d-block">{{ form.question_type.label }}</label>
+      <div class="btn-group" role="group">
+        <input type="radio" class="btn-check" name="question_type" id="qtype-mc" value="mc" {% if form.question_type.value != 'tf' %}checked{% endif %}>
+        <label class="btn btn-outline-primary" for="qtype-mc"><i class="bi bi-list-check"></i> แบบเลือกตอบ</label>
+        <input type="radio" class="btn-check" name="question_type" id="qtype-tf" value="tf" {% if form.question_type.value == 'tf' %}checked{% endif %}>
+        <label class="btn btn-outline-primary" for="qtype-tf"><i class="bi bi-toggle-on"></i> แบบถูก/ผิด</label>
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">{{ form.text.label }}</label>
+      {{ form.text }}
+    </div>
+    {% if kind == 'invideo' %}
+    <div class="mb-3">
+      <label class="form-label">{{ form.trigger_time.label }}</label>
+      {{ form.trigger_time }}
+      {% if form.trigger_time.errors %}<div class="text-danger small">{{ form.trigger_time.errors|join:', ' }}</div>{% endif %}
+    </div>
+    {% endif %}
+    <div class="mb-3">
+      <label class="form-label d-block" id="choices-label">ตัวเลือกคำตอบ (เว้นว่างถ้าไม่ใช้)</label>
+    </div>
+    <div class="d-flex flex-column gap-2 mb-3">
+      <div class="input-group" id="choice-row-1">
+        <span class="input-group-text"><input type="radio" name="correct_choice" value="1" class="form-check-input mt-0" {% if form.correct_choice.value == "1" %}checked{% endif %}></span>
+        {{ form.choice_1 }}
+      </div>
+      <div class="input-group" id="choice-row-2">
+        <span class="input-group-text"><input type="radio" name="correct_choice" value="2" class="form-check-input mt-0" {% if form.correct_choice.value == "2" %}checked{% endif %}></span>
+        {{ form.choice_2 }}
+      </div>
+      <div class="input-group" id="choice-row-3">
+        <span class="input-group-text"><input type="radio" name="correct_choice" value="3" class="form-check-input mt-0" {% if form.correct_choice.value == "3" %}checked{% endif %}></span>
+        {{ form.choice_3 }}
+      </div>
+      <div class="input-group" id="choice-row-4">
+        <span class="input-group-text"><input type="radio" name="correct_choice" value="4" class="form-check-input mt-0" {% if form.correct_choice.value == "4" %}checked{% endif %}></span>
+        {{ form.choice_4 }}
+      </div>
+      <div class="form-text" id="choices-hint">คลิกปุ่มวงกลมด้านหน้าตัวเลือกที่เป็นคำตอบที่ถูกต้อง</div>
+      {% if form.choice_1.errors %}<div class="text-danger small">{{ form.choice_1.errors|join:', ' }}</div>{% endif %}
+      {% if form.choice_2.errors %}<div class="text-danger small">{{ form.choice_2.errors|join:', ' }}</div>{% endif %}
+      {% if form.correct_choice.errors %}<div class="text-danger small">{{ form.correct_choice.errors|join:', ' }}</div>{% endif %}
+    </div>
+    <button type="submit" class="btn btn-primary w-100">บันทึกคำถาม</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    var mcRadio = document.getElementById('qtype-mc');
+    var tfRadio = document.getElementById('qtype-tf');
+    var choice1 = document.getElementById('id_choice_1');
+    var choice2 = document.getElementById('id_choice_2');
+    var row3 = document.getElementById('choice-row-3');
+    var row4 = document.getElementById('choice-row-4');
+    var choicesLabel = document.getElementById('choices-label');
+    var choicesHint = document.getElementById('choices-hint');
+
+    function applyMode() {
+      var isTf = tfRadio.checked;
+      row3.style.display = isTf ? 'none' : '';
+      row4.style.display = isTf ? 'none' : '';
+      choice1.readOnly = isTf;
+      choice2.readOnly = isTf;
+      if (isTf) {
+        choice1.value = 'ถูก';
+        choice2.value = 'ผิด';
+        choicesLabel.textContent = 'เลือกคำตอบที่ถูกต้อง';
+        choicesHint.textContent = 'คลิกปุ่มวงกลมหน้า "ถูก" หรือ "ผิด" เพื่อระบุคำตอบที่ถูกต้อง';
+      } else {
+        choicesLabel.textContent = 'ตัวเลือกคำตอบ (เว้นว่างถ้าไม่ใช้)';
+        choicesHint.textContent = 'คลิกปุ่มวงกลมด้านหน้าตัวเลือกที่เป็นคำตอบที่ถูกต้อง';
+      }
+    }
+
+    mcRadio.addEventListener('change', applyMode);
+    tfRadio.addEventListener('change', applyMode);
+    applyMode();
+  })();
+</script>
+{% endblock %}

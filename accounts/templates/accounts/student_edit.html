@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}แก้ไขนักเรียน{% endblock %}
+{% block content %}
+<div class="card p-4" style="max-width:520px;margin:0 auto;">
+  <h4 class="fw-bold mb-3"><i class="bi bi-pencil text-primary"></i> แก้ไขข้อมูลนักเรียน</h4>
+  <form method="post">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-6 mb-3">
+        <label class="form-label">ชื่อ</label>
+        <input type="text" name="first_name" class="form-control" value="{{ student.first_name }}">
+      </div>
+      <div class="col-6 mb-3">
+        <label class="form-label">นามสกุล</label>
+        <input type="text" name="last_name" class="form-control" value="{{ student.last_name }}">
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">รหัสนักเรียน</label>
+      <input type="text" name="student_code" class="form-control" value="{{ student.student_code }}">
+    </div>
+    <button type="submit" class="btn btn-primary w-100">บันทึก</button>
+  </form>
+</div>
+{% endblock %}

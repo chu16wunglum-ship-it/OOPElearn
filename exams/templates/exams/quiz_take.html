@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}{{ kind_label }} - {{ lesson.title }}{% endblock %}
+{% block content %}
+<a href="{% url 'courses:lesson_detail' lesson.pk %}" class="text-decoration-none small text-secondary"><i class="bi bi-arrow-left"></i> {{ lesson.title }}</a>
+<h3 class="fw-bold mt-2 mb-4">{{ kind_label }}</h3>
+
+{% if not questions %}
+<div class="card p-4 text-center text-secondary">ครูยังไม่ได้เพิ่มคำถามสำหรับแบบทดสอบนี้</div>
+{% else %}
+<form method="post">
+  {% csrf_token %}
+  <div class="d-flex flex-column gap-3 mb-4">
+    {% for question in questions %}
+    <div class="quiz-question-card">
+      <p class="fw-semibold">{{ forloop.counter }}. {{ question.text }}</p>
+      {% for choice in question.choices.all %}
+      <div class="form-check mb-2">
+        <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}c{{ choice.id }}" value="{{ choice.id }}" required>
+        <label class="form-check-label" for="q{{ question.id }}c{{ choice.id }}">{{ choice.text }}</label>
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  <button type="submit" class="btn btn-primary btn-lg w-100"><i class="bi bi-send-check"></i> ส่งคำตอบ</button>
+</form>
+{% endif %}
+{% endblock %}

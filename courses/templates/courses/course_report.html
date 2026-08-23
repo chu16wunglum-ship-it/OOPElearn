@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}ผลสรุป - {{ course.title }}{% endblock %}
+{% block content %}
+<h3 class="fw-bold mb-1"><i class="bi bi-graph-up text-primary"></i> ผลสรุปนักเรียน</h3>
+<p class="text-secondary mb-4">รายวิชา <strong>{{ course.title }}</strong> &middot; {{ rows|length }} นักเรียน &middot; {{ lessons|length }} บทเรียน</p>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-report align-middle mb-0">
+      <thead>
+        <tr>
+          <th rowspan="2" class="align-middle">นักเรียน</th>
+          {% for lesson in lessons %}<th colspan="3" class="text-center border-start">{{ lesson.title|truncatechars:20 }}</th>{% endfor %}
+          <th rowspan="2"></th>
+        </tr>
+        <tr>
+          {% for lesson in lessons %}
+          <th class="text-center border-start">ก่อนเรียน</th><th class="text-center">วิดีโอ</th><th class="text-center">หลังเรียน</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td class="fw-semibold">{{ row.student.first_name }} {{ row.student.last_name }}</td>
+          {% for entry in row.lessons %}
+            <td class="text-center border-start">{% if entry.pretest %}{{ entry.pretest.score }}%{% else %}<span class="text-muted">-</span>{% endif %}</td>
+            <td class="text-center">
+              {% if entry.video %}<span class="badge {% if entry.video.completed %}badge-soft done{% else %}badge-soft{% endif %}">{{ entry.video.percent_watched }}%</span>
+              {% else %}<span class="text-muted">-</span>{% endif %}
+            </td>
+            <td class="text-center">{% if entry.posttest %}{{ entry.posttest.score }}%{% else %}<span class="text-muted">-</span>{% endif %}</td>
+          {% endfor %}
+          <td><a href="{% url 'courses:student_report' course.pk row.student.pk %}" class="btn btn-sm btn-outline-primary">รายละเอียด</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="99" class="text-center text-secondary py-4">ยังไม่มีนักเรียนลงทะเบียนในวิชานี้</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

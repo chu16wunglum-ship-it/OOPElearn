@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}ลบรายวิชา{% endblock %}
+{% block content %}
+<div class="card p-4" style="max-width:480px;margin:0 auto;">
+  <h4 class="fw-bold mb-3 text-danger"><i class="bi bi-exclamation-triangle"></i> ยืนยันการลบรายวิชา</h4>
+  <p>คุณต้องการลบรายวิชา <strong>{{ course.title }}</strong> ใช่หรือไม่? บทเรียน แบบทดสอบ และผลคะแนนทั้งหมดในวิชานี้จะถูกลบด้วย</p>
+  <form method="post" class="d-flex gap-2">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">ลบรายวิชา</button>
+    <a href="{% url 'courses:course_detail' course.pk %}" class="btn btn-outline-secondary">ยกเลิก</a>
+  </form>
+</div>
+{% endblock %}

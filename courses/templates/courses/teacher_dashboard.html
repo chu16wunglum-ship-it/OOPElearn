@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}วิชาของฉัน{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h3 class="fw-bold mb-0">วิชาของฉัน</h3>
+    <p class="text-secondary mb-0 small">จัดการรายวิชา บทเรียน วิดีโอ และแบบทดสอบ</p>
+  </div>
+  <a href="{% url 'courses:course_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> สร้างรายวิชาใหม่</a>
+</div>
+
+<div class="row g-4">
+  {% for course in courses %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card card-course h-100">
+      <div class="course-cover">
+        {% if course.cover_image_url %}<img src="{{ course.cover_image_url }}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:1rem 1rem 0 0;">{% else %}<i class="bi bi-mortarboard-fill"></i>{% endif %}
+      </div>
+      <div class="card-body">
+        <h5 class="fw-semibold mb-1">{{ course.title }}</h5>
+        <p class="text-secondary small mb-3">{{ course.description|truncatewords:16|default:'ยังไม่มีคำอธิบายรายวิชา' }}</p>
+        <div class="d-flex gap-2 mb-3">
+          <span class="badge badge-soft"><i class="bi bi-play-btn"></i> {{ course.lesson_count }} บทเรียน</span>
+          <span class="badge badge-soft"><i class="bi bi-people"></i> {{ course.student_count }} นักเรียน</span>
+        </div>
+        <a href="{% url 'courses:course_detail' course.pk %}" class="btn btn-outline-primary w-100 btn-sm">จัดการวิชา</a>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12">
+    <div class="card p-5 text-center">
+      <p class="text-secondary mb-3">คุณยังไม่มีรายวิชา เริ่มสร้างรายวิชาแรกของคุณได้เลย</p>
+      <a href="{% url 'courses:course_create' %}" class="btn btn-primary mx-auto" style="width:fit-content;"><i class="bi bi-plus-lg"></i> สร้างรายวิชาใหม่</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}จัดการนักเรียน{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h3 class="fw-bold mb-0"><i class="bi bi-people text-primary"></i> จัดการนักเรียน</h3>
+    <p class="text-secondary mb-0 small">นักเรียนทั้งหมดที่คุณสร้างไว้ ({{ students|length }} คน)</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'accounts:student_bulk_add' %}" class="btn btn-outline-primary"><i class="bi bi-upload"></i> เพิ่มหลายคน</a>
+    <a href="{% url 'accounts:student_add' %}" class="btn btn-primary"><i class="bi bi-person-plus"></i> เพิ่มนักเรียน</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-report align-middle mb-0">
+      <thead>
+        <tr>
+          <th>ชื่อ-สกุล</th>
+          <th>ชื่อผู้ใช้</th>
+          <th>รหัสนักเรียน</th>
+          <th class="text-end">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+        <tr>
+          <td>{{ student.first_name }} {{ student.last_name }}</td>
+          <td><code>{{ student.username }}</code></td>
+          <td>{{ student.student_code|default:'-' }}</td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm">
+              <a href="{% url 'accounts:student_edit' student.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+              <a href="{% url 'accounts:student_reset_password' student.pk %}" class="btn btn-outline-warning"><i class="bi bi-key"></i></a>
+              <a href="{% url 'accounts:student_delete' student.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i></a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center text-secondary py-4">ยังไม่มีนักเรียน คลิก "เพิ่มนักเรียน" เพื่อเริ่มต้น</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if courses %}
+<p class="small text-secondary mt-3">จัดการรายชื่อนักเรียนในแต่ละวิชาได้ที่หน้า "รายชื่อนักเรียน" ของวิชานั้น ๆ ในเมนู วิชาของฉัน</p>
+{% endif %}
+{% endblock %}
