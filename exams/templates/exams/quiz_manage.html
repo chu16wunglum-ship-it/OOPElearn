@@ -2,10 +2,16 @@
 {% block title %}จัดการ{{ kind_label }} - {{ lesson.title }}{% endblock %}
 {% block content %}
 <a href="{% url 'courses:course_detail' lesson.course.pk %}" class="text-decoration-none small text-secondary"><i class="bi bi-arrow-left"></i> {{ lesson.course.title }}</a>
-<div class="d-flex flex-wrap justify-content-between align-items-center mt-2 mb-4 gap-2">
-  <div>
-    <h3 class="fw-bold mb-0">{{ kind_label }}</h3>
-    <p class="text-secondary mb-0 small">บทเรียน: {{ lesson.title }}</p>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mt-2 mb-4 gap-3">
+  <div class="d-flex align-items-center gap-3">
+    <div class="quiz-kind-icon">
+      <i class="bi {% if kind == 'pretest' %}bi-clipboard2-check{% elif kind == 'invideo' %}bi-camera-reels{% else %}bi-clipboard2-data{% endif %}"></i>
+    </div>
+    <div>
+      <h3 class="fw-bold mb-0">{{ kind_label }}</h3>
+      <p class="text-secondary mb-0 small">บทเรียน: {{ lesson.title }} &middot; <span class="fw-semibold text-body">{{ questions|length }}</span> ข้อ</p>
+    </div>
   </div>
   <a href="{% url 'exams:question_add' lesson.id kind %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> เพิ่มคำถาม</a>
 </div>
@@ -25,32 +31,50 @@
 <div class="alert alert-info py-2 small"><i class="bi bi-info-circle"></i> คำถามเหล่านี้จะปรากฏขึ้นระหว่างที่นักเรียนดูวิดีโอ ณ วินาทีที่กำหนด</div>
 {% endif %}
 
-<div class="d-flex flex-column gap-2">
+{% if quiz.source_file %}
+<a href="{{ quiz.source_file.url }}" target="_blank" class="d-inline-flex align-items-center gap-2 text-decoration-none px-3 py-2 mb-3 rounded-3" style="background:#f6f5fc;border:1px solid var(--border-soft);">
+  <i class="bi bi-file-earmark-text text-primary"></i>
+  <span class="small fw-semibold text-body">ดูไฟล์ต้นฉบับ</span>
+  <span class="small text-secondary">{{ quiz.source_file.name|cut:"quiz_sources/" }}</span>
+</a>
+{% endif %}
+
+<div class="d-flex flex-column gap-3">
   {% for question in questions %}
-  <div class="card p-3">
-    <div class="d-flex justify-content-between align-items-start gap-2">
-      <div>
-        <div class="fw-semibold">{{ forloop.counter }}. {{ question.text }}
-          {% if question.is_true_false %}<span class="badge badge-soft">ถูก/ผิด</span>{% else %}<span class="badge badge-soft">เลือกตอบ</span>{% endif %}
+  <div class="card question-card p-3 p-md-4">
+    <div class="d-flex justify-content-between align-items-start gap-3">
+      <div class="d-flex gap-3 flex-grow-1">
+        <div class="question-number">{{ forloop.counter }}</div>
+        <div class="flex-grow-1">
+          <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+            <span class="fw-semibold">{{ question.text }}</span>
+            {% if question.is_true_false %}<span class="badge badge-soft">ถูก/ผิด</span>{% else %}<span class="badge badge-soft">เลือกตอบ</span>{% endif %}
+            {% if kind == 'invideo' %}<span class="badge badge-soft"><i class="bi bi-clock"></i> วินาทีที่ {{ question.trigger_time }}</span>{% endif %}
+          </div>
+          <div class="row g-2">
+            {% for choice in question.choices.all %}
+            <div class="col-sm-6">
+              <div class="choice-chip {% if choice.is_correct %}correct{% endif %}">
+                {% if choice.is_correct %}<i class="bi bi-check-circle-fill"></i>{% else %}<i class="bi bi-circle text-muted"></i>{% endif %}
+                <span>{{ choice.text }}</span>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
         </div>
-        {% if kind == 'invideo' %}<div class="small text-secondary mb-2"><i class="bi bi-clock"></i> วินาทีที่ {{ question.trigger_time }}</div>{% endif %}
-        <ul class="list-unstyled small mb-0 mt-2">
-          {% for choice in question.choices.all %}
-          <li class="{% if choice.is_correct %}text-success fw-semibold{% endif %}">
-            {% if choice.is_correct %}<i class="bi bi-check-circle-fill"></i>{% else %}<i class="bi bi-circle text-muted"></i>{% endif %}
-            {{ choice.text }}
-          </li>
-          {% endfor %}
-        </ul>
       </div>
       <div class="d-flex gap-2 flex-shrink-0">
-        <a href="{% url 'exams:question_edit' question.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
-        <a href="{% url 'exams:question_delete' question.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+        <a href="{% url 'exams:question_edit' question.pk %}" class="btn btn-sm btn-outline-secondary" title="แก้ไข"><i class="bi bi-pencil"></i></a>
+        <a href="{% url 'exams:question_delete' question.pk %}" class="btn btn-sm btn-outline-danger" title="ลบ"><i class="bi bi-trash"></i></a>
       </div>
     </div>
   </div>
   {% empty %}
-  <div class="card p-4 text-center text-secondary">ยังไม่มีคำถามใน{{ kind_label }} คลิก "เพิ่มคำถาม" เพื่อเริ่มต้น</div>
+  <div class="card p-5 text-center">
+    <i class="bi bi-clipboard-x text-secondary" style="font-size:2.2rem;"></i>
+    <p class="text-secondary mt-2 mb-3">ยังไม่มีคำถามใน{{ kind_label }} คลิก "เพิ่มคำถาม" เพื่อเริ่มต้น</p>
+    <a href="{% url 'exams:question_add' lesson.id kind %}" class="btn btn-primary mx-auto" style="width:fit-content;"><i class="bi bi-plus-lg"></i> เพิ่มคำถามแรก</a>
+  </div>
   {% endfor %}
 </div>
 {% endblock %}

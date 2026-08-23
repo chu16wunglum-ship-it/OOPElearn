@@ -34,7 +34,11 @@
 
     <div class="video-wrap mb-2">
       <div class="ratio ratio-16x9">
-        {% if lesson.youtube_id %}
+        {% if lesson.video_kind == 'file' %}
+          <video id="html5-player" controls playsinline style="width:100%;height:100%;background:#000;">
+            <source src="{{ lesson.video_file.url }}">
+          </video>
+        {% elif lesson.video_kind == 'youtube' %}
           <div id="yt-player"></div>
         {% else %}
           <div class="d-flex align-items-center justify-content-center text-white">ยังไม่ได้ตั้งค่าลิงก์วิดีโอ</div>
@@ -79,17 +83,66 @@
       {% endif %}
     </div>
     {% endif %}
+
+    {% if retest_quiz %}
+    <div class="card p-3 mb-3 d-flex flex-row align-items-center justify-content-between flex-wrap gap-2">
+      <div>
+        <div class="fw-semibold"><i class="bi bi-arrow-repeat text-primary"></i> แบบทดสอบหลังเรียน</div>
+        {% if retest_attempt %}
+          <div class="small text-secondary">คะแนนล่าสุด {{ retest_attempt.score }}%</div>
+        {% elif retest_locked %}
+          <div class="small text-secondary" id="retest-locked-banner">ดูวิดีโอให้ครบอย่างน้อย 90% เพื่อปลดล็อก</div>
+          <div class="small text-success d-none" id="retest-unlocked-banner"><i class="bi bi-unlock"></i> ปลดล็อกแล้ว</div>
+        {% endif %}
+      </div>
+      {% if is_enrolled_student and not retest_locked %}
+      <a href="{% url 'exams:quiz_take' lesson.id 'retest' %}" class="btn btn-sm {% if retest_attempt %}btn-outline-primary{% else %}btn-primary{% endif %}">
+        {% if retest_attempt %}ทำอีกครั้ง{% else %}เริ่มทำแบบทดสอบ{% endif %}
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
   </div>
 
   <div class="col-lg-4">
-    <div class="card p-3">
+    <div class="card p-3 mb-3">
       <h6 class="fw-semibold mb-2">เกี่ยวกับบทเรียนนี้</h6>
       <ul class="list-unstyled small text-secondary mb-0 d-flex flex-column gap-2">
-        <li><i class="bi bi-clipboard2-check"></i> แบบทดสอบก่อนเรียน: {% if pretest_quiz %}{{ pretest_quiz.question_count }} ข้อ{% else %}ไม่มี{% endif %}</li>
-        <li><i class="bi bi-camera-reels"></i> คำถามระหว่างวิดีโอ: {% if invideo_quiz %}{{ invideo_quiz.question_count }} ข้อ{% else %}ไม่มี{% endif %}</li>
-        <li><i class="bi bi-clipboard2-data"></i> แบบทดสอบหลังเรียน: {% if posttest_quiz %}{{ posttest_quiz.question_count }} ข้อ{% else %}ไม่มี{% endif %}</li>
+        <li class="d-flex justify-content-between align-items-center gap-2">
+          <span><i class="bi bi-clipboard2-check"></i> แบบทดสอบก่อนเรียน: {% if pretest_quiz %}{{ pretest_quiz.question_count }} ข้อ{% else %}ไม่มี{% endif %}</span>
+          {% if is_teacher_owner %}<a href="{% url 'exams:quiz_manage' lesson.id 'pretest' %}" class="btn btn-sm btn-outline-primary py-0 px-2 flex-shrink-0">ดูคำถาม</a>{% endif %}
+        </li>
+        <li class="d-flex justify-content-between align-items-center gap-2">
+          <span><i class="bi bi-camera-reels"></i> คำถามระหว่างวิดีโอ: {% if invideo_quiz %}{{ invideo_quiz.question_count }} ข้อ{% else %}ไม่มี{% endif %}</span>
+          {% if is_teacher_owner %}<a href="{% url 'exams:quiz_manage' lesson.id 'invideo' %}" class="btn btn-sm btn-outline-primary py-0 px-2 flex-shrink-0">ดูคำถาม</a>{% endif %}
+        </li>
+        <li class="d-flex justify-content-between align-items-center gap-2">
+          <span><i class="bi bi-clipboard2-data"></i> แบบทดสอบหลังเรียน: {% if posttest_quiz %}{{ posttest_quiz.question_count }} ข้อ{% else %}ไม่มี{% endif %}</span>
+          {% if is_teacher_owner %}<a href="{% url 'exams:quiz_manage' lesson.id 'posttest' %}" class="btn btn-sm btn-outline-primary py-0 px-2 flex-shrink-0">ดูคำถาม</a>{% endif %}
+        </li>
+        <li class="d-flex justify-content-between align-items-center gap-2">
+          <span><i class="bi bi-arrow-repeat"></i> หลังเรียน (ชุดก่อนเรียน): {% if retest_quiz %}{{ retest_quiz.question_count }} ข้อ{% else %}ไม่มี{% endif %}</span>
+          {% if is_teacher_owner %}<a href="{% url 'exams:quiz_manage' lesson.id 'retest' %}" class="btn btn-sm btn-outline-primary py-0 px-2 flex-shrink-0">ดูคำถาม</a>{% endif %}
+        </li>
       </ul>
     </div>
+    {% if lesson.slide_file or lesson.extra_file %}
+    <div class="card p-3 d-flex flex-column gap-2">
+      <h6 class="fw-semibold mb-0">เอกสารประกอบการเรียน</h6>
+      {% if lesson.slide_file %}
+      <a href="{{ lesson.slide_file.url }}" target="_blank" class="btn btn-outline-primary w-100 btn-sm">
+        <i class="bi {% if lesson.slide_extension == 'pdf' %}bi-file-earmark-pdf{% else %}bi-file-earmark-slides{% endif %}"></i>
+        ดาวน์โหลดเอกสาร ({{ lesson.slide_extension|upper }})
+      </a>
+      {% endif %}
+      {% if lesson.extra_file %}
+      <a href="{{ lesson.extra_file.url }}" target="_blank" class="btn btn-outline-secondary w-100 btn-sm">
+        <i class="bi {% if lesson.extra_extension == 'pdf' %}bi-file-earmark-pdf{% else %}bi-file-earmark-slides{% endif %}"></i>
+        เอกสารเสริม ({{ lesson.extra_extension|upper }})
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
   </div>
 </div>
 
@@ -167,6 +220,7 @@
 {% block extra_js %}
 <script>
   window.LESSON_CONFIG = {
+    videoKind: "{{ lesson.video_kind }}",
     videoId: "{{ lesson.youtube_id|escapejs }}",
     invideoQuestions: JSON.parse(document.getElementById('invideo-questions-data').textContent),
     answerUrl: {% if is_enrolled_student %}"{% url 'exams:invideo_answer' lesson.id %}"{% else %}null{% endif %},

@@ -1,6 +1,7 @@
 import re
 
 from django.conf import settings
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.urls import reverse
 
@@ -8,6 +9,8 @@ from django.urls import reverse
 YOUTUBE_ID_RE = re.compile(
     r'(?:youtube(?:-nocookie)?\.com/(?:watch\?v=|embed/|shorts/)|youtu\.be/)([A-Za-z0-9_-]{11})'
 )
+
+UNIT_NUMBER_RE = re.compile(r'หน่วยที่\s*(\d+)')
 
 
 def extract_youtube_id(url):
@@ -48,6 +51,11 @@ class Course(models.Model):
         return self.cover_url
 
     @property
+    def unit_number(self):
+        match = UNIT_NUMBER_RE.search(self.title)
+        return int(match.group(1)) if match else None
+
+    @property
     def lesson_count(self):
         return self.lessons.count()
 
@@ -60,7 +68,21 @@ class Lesson(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='lessons')
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    youtube_url = models.URLField(help_text='ลิงก์วิดีโอ YouTube ของบทเรียนนี้')
+    youtube_url = models.URLField(blank=True, help_text='ลิงก์วิดีโอ YouTube ของบทเรียนนี้')
+    video_file = models.FileField(
+        upload_to='lesson_videos/', blank=True, null=True,
+        help_text='หรืออัปโหลดไฟล์วิดีโอโดยตรงจากเครื่อง (MP4 แนะนำ)',
+    )
+    slide_file = models.FileField(
+        upload_to='lesson_slides/', blank=True, null=True,
+        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'ppt', 'pptx'])],
+        help_text='ไฟล์เอกสารประกอบการเรียน (PDF หรือ PowerPoint)',
+    )
+    extra_file = models.FileField(
+        upload_to='lesson_extras/', blank=True, null=True,
+        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'ppt', 'pptx'])],
+        help_text='เอกสารเสริมเพิ่มเติม (ถ้ามี)',
+    )
     order = models.PositiveIntegerField(default=0)
     content_notes = models.TextField(
         blank=True,
@@ -80,6 +102,26 @@ class Lesson(models.Model):
     @property
     def youtube_id(self):
         return extract_youtube_id(self.youtube_url)
+
+    @property
+    def video_kind(self):
+        if self.video_file:
+            return 'file'
+        if self.youtube_id:
+            return 'youtube'
+        return ''
+
+    @property
+    def slide_extension(self):
+        if not self.slide_file:
+            return ''
+        return self.slide_file.name.rsplit('.', 1)[-1].lower()
+
+    @property
+    def extra_extension(self):
+        if not self.extra_file:
+            return ''
+        return self.extra_file.name.rsplit('.', 1)[-1].lower()
 
 
 class Enrollment(models.Model):

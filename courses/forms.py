@@ -23,11 +23,14 @@ class CourseForm(BootstrapFormMixin, forms.ModelForm):
 class LessonForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Lesson
-        fields = ['title', 'description', 'youtube_url', 'order', 'content_notes']
+        fields = ['title', 'description', 'youtube_url', 'video_file', 'slide_file', 'extra_file', 'order', 'content_notes']
         labels = {
             'title': 'ชื่อบทเรียน',
             'description': 'คำอธิบายบทเรียน',
             'youtube_url': 'ลิงก์วิดีโอ YouTube',
+            'video_file': 'อัปโหลดไฟล์วิดีโอ',
+            'slide_file': 'เอกสารประกอบ (PDF/PowerPoint)',
+            'extra_file': 'เอกสารเสริม (ถ้ามี)',
             'order': 'ลำดับ',
             'content_notes': 'เนื้อหาบทเรียนแบบละเอียด (สำหรับ AI ผู้ช่วย)',
         }

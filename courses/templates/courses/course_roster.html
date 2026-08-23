@@ -1,8 +1,15 @@
 {% extends 'base.html' %}
 {% block title %}รายชื่อนักเรียน - {{ course.title }}{% endblock %}
 {% block content %}
-<h3 class="fw-bold mb-1"><i class="bi bi-people text-primary"></i> รายชื่อนักเรียน</h3>
-<p class="text-secondary mb-4">เลือกนักเรียนที่จะลงทะเบียนในวิชา <strong>{{ course.title }}</strong></p>
+<a href="{% url 'courses:course_detail' course.pk %}" class="text-decoration-none small text-secondary"><i class="bi bi-arrow-left"></i> {{ course.title }}</a>
+
+<div class="d-flex align-items-center gap-3 mt-2 mb-4">
+  <div class="quiz-kind-icon"><i class="bi bi-people"></i></div>
+  <div>
+    <h3 class="fw-bold mb-0">มอบหมายนักเรียน</h3>
+    <p class="text-secondary mb-0 small">เลือกนักเรียนที่จะลงทะเบียนในวิชา <strong>{{ course.title }}</strong></p>
+  </div>
+</div>
 
 <div class="card p-4">
   {% if not all_students %}
@@ -11,24 +18,92 @@
   {% else %}
   <form method="post">
     {% csrf_token %}
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <span class="badge badge-soft"><span id="selected-count">{{ enrolled_ids|length }}</span> / {{ all_students|length }} คนถูกเลือก</span>
+      <input type="text" id="roster-search" class="form-control form-control-sm" style="max-width:220px;" placeholder="ค้นหานักเรียน...">
+    </div>
     <div class="table-responsive mb-3">
-      <table class="table align-middle">
-        <thead><tr><th style="width:3rem;"></th><th>ชื่อ-สกุล</th><th>ชื่อผู้ใช้</th><th>รหัสนักเรียน</th></tr></thead>
+      <table class="table table-report align-middle mb-0" id="roster-table">
+        <thead>
+          <tr>
+            <th style="width:3rem;"></th>
+            <th>ชื่อ-สกุล</th>
+            <th>ชื่อผู้ใช้</th>
+            <th>รหัสนักเรียน</th>
+            <th>สถานะ</th>
+          </tr>
+        </thead>
         <tbody>
           {% for student in all_students %}
-          <tr>
-            <td><input type="checkbox" class="form-check-input" name="student_ids" value="{{ student.pk }}" {% if student.pk in enrolled_ids %}checked{% endif %}></td>
-            <td>{{ student.first_name }} {{ student.last_name }}</td>
+          <tr class="roster-row{% if student.pk in enrolled_ids %} roster-row-enrolled{% endif %}" data-search="{{ student.first_name }} {{ student.last_name }} {{ student.username }} {{ student.student_code }}">
+            <td><input type="checkbox" class="form-check-input roster-checkbox" name="student_ids" value="{{ student.pk }}" {% if student.pk in enrolled_ids %}checked{% endif %}></td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <span class="student-avatar">{{ student.first_name|default:student.username|first|upper }}</span>
+                <span class="fw-semibold">{{ student.first_name }} {{ student.last_name }}</span>
+              </div>
+            </td>
             <td><code>{{ student.username }}</code></td>
             <td>{{ student.student_code|default:'-' }}</td>
+            <td>
+              <span class="badge badge-soft roster-status-badge {% if student.pk in enrolled_ids %}done{% endif %}">
+                {% if student.pk in enrolled_ids %}<i class="bi bi-check-circle"></i> ลงทะเบียนแล้ว{% else %}ยังไม่ได้เลือก{% endif %}
+              </span>
+            </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
-    <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> บันทึกรายชื่อ</button>
-    <a href="{% url 'accounts:student_add' %}" class="btn btn-outline-secondary">+ เพิ่มนักเรียนใหม่</a>
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> บันทึกรายชื่อ</button>
+      <a href="{% url 'accounts:student_add' %}" class="btn btn-outline-secondary">+ เพิ่มนักเรียนใหม่</a>
+    </div>
   </form>
   {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    const table = document.getElementById('roster-table');
+    if (!table) return;
+    const rows = table.querySelectorAll('.roster-row');
+    const selectedCountEl = document.getElementById('selected-count');
+
+    function updateRow(row) {
+      const checkbox = row.querySelector('.roster-checkbox');
+      const badge = row.querySelector('.roster-status-badge');
+      row.classList.toggle('roster-row-enrolled', checkbox.checked);
+      badge.classList.toggle('done', checkbox.checked);
+      badge.innerHTML = checkbox.checked
+        ? '<i class="bi bi-check-circle"></i> ลงทะเบียนแล้ว'
+        : 'ยังไม่ได้เลือก';
+    }
+
+    function updateCount() {
+      if (!selectedCountEl) return;
+      selectedCountEl.textContent = table.querySelectorAll('.roster-checkbox:checked').length;
+    }
+
+    rows.forEach(function (row) {
+      row.querySelector('.roster-checkbox').addEventListener('change', function () {
+        updateRow(row);
+        updateCount();
+      });
+    });
+
+    const searchInput = document.getElementById('roster-search');
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        const term = this.value.trim().toLowerCase();
+        rows.forEach(function (row) {
+          const haystack = row.getAttribute('data-search').toLowerCase();
+          row.classList.toggle('d-none', term.length > 0 && haystack.indexOf(term) === -1);
+        });
+      });
+    }
+  })();
+</script>
 {% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}นำเข้าแบบทดสอบก่อนเรียน{% endblock %}
+{% block content %}
+<a href="{% url 'courses:teacher_dashboard' %}" class="text-decoration-none small text-secondary"><i class="bi bi-arrow-left"></i> วิชาของฉัน</a>
+
+<div class="d-flex align-items-center gap-3 mt-2 mb-4">
+  <div class="quiz-kind-icon"><i class="bi bi-clipboard2-check"></i></div>
+  <div>
+    <h3 class="fw-bold mb-0">นำเข้าแบบทดสอบก่อนเรียน / หลังเรียน</h3>
+    <p class="text-secondary mb-0 small">อ่านคำถามจาก pretest.docx แล้วนำเข้าให้แต่ละหน่วยทีละครั้ง หรือคัดลอกชุดเดียวกันไปเป็นแบบทดสอบหลังเรียนได้</p>
+  </div>
+</div>
+
+{% if not docx_exists %}
+<div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> ไม่พบไฟล์ <code>media/pretest/pretest.docx</code> กรุณาวางไฟล์นี้ก่อนจึงจะนำเข้าได้</div>
+{% elif parse_error %}
+<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> {{ parse_error }}</div>
+{% endif %}
+
+<div class="d-flex flex-column gap-3">
+  {% for row in rows %}
+  <div class="card p-3">
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <div class="question-number">{{ row.course.unit_number|default:'-' }}</div>
+      <div class="fw-semibold">{{ row.course.title }}</div>
+      {% if row.available_count %}
+        <span class="badge badge-soft ms-auto">มีคำถามในไฟล์ {{ row.available_count }} ข้อ</span>
+      {% else %}
+        <span class="badge badge-soft locked ms-auto">ไม่พบคำถามของหน่วยนี้ในไฟล์</span>
+      {% endif %}
+    </div>
+
+    <div class="d-flex flex-column gap-2">
+      <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap p-2 rounded-3" style="background:#f9f9fd;">
+        <div class="small">
+          <i class="bi bi-clipboard2-check text-primary"></i> <span class="fw-semibold">แบบทดสอบก่อนเรียน</span> &mdash;
+          {% if row.pretest_quiz %}
+            <span class="badge badge-soft done"><i class="bi bi-check-circle"></i> มีอยู่แล้ว {{ row.pretest_quiz.question_count }} ข้อ</span>
+          {% else %}
+            <span class="badge badge-soft">ยังไม่มี</span>
+          {% endif %}
+        </div>
+        <div class="d-flex gap-2">
+          {% if row.pretest_quiz %}
+          <a href="{% url 'exams:quiz_manage' row.lesson.id 'pretest' %}" class="btn btn-outline-secondary btn-sm">ดูคำถาม</a>
+          {% endif %}
+          {% if row.available_count and row.lesson %}
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="target_kind" value="pretest">
+            <input type="hidden" name="unit_number" value="{{ row.course.unit_number }}">
+            <input type="hidden" name="course_id" value="{{ row.course.id }}">
+            <button type="submit" class="btn btn-primary btn-sm">
+              <i class="bi bi-upload"></i> {% if row.pretest_quiz %}นำเข้าใหม่{% else %}นำเข้า{% endif %}
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap p-2 rounded-3" style="background:#f9f9fd;">
+        <div class="small">
+          <i class="bi bi-clipboard2-data text-primary"></i> <span class="fw-semibold">แบบทดสอบหลังเรียน</span> &mdash;
+          {% if row.retest_quiz %}
+            <span class="badge badge-soft done"><i class="bi bi-check-circle"></i> มีอยู่แล้ว {{ row.retest_quiz.question_count }} ข้อ</span>
+          {% else %}
+            <span class="badge badge-soft">ยังไม่มี</span>
+          {% endif %}
+        </div>
+        <div class="d-flex gap-2">
+          {% if row.retest_quiz %}
+          <a href="{% url 'exams:quiz_manage' row.lesson.id 'retest' %}" class="btn btn-outline-secondary btn-sm">ดูคำถาม</a>
+          {% endif %}
+          {% if row.available_count and row.lesson %}
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="target_kind" value="retest">
+            <input type="hidden" name="unit_number" value="{{ row.course.unit_number }}">
+            <input type="hidden" name="course_id" value="{{ row.course.id }}">
+            <button type="submit" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-files"></i> {% if row.retest_quiz %}คัดลอกใหม่{% else %}คัดลอกจากก่อนเรียน{% endif %}
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="card p-4 text-center text-secondary">คุณยังไม่มีรายวิชา</div>
+  {% endfor %}
+</div>
+{% endblock %}

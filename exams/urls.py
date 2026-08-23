@@ -5,6 +5,7 @@ from . import views
 app_name = 'exams'
 
 urlpatterns = [
+    path('pretest-import/', views.pretest_import, name='pretest_import'),
     path('lesson/<int:lesson_id>/<str:kind>/manage/', views.quiz_manage, name='quiz_manage'),
     path('lesson/<int:lesson_id>/<str:kind>/question/add/', views.question_add, name='question_add'),
     path('question/<int:pk>/edit/', views.question_edit, name='question_edit'),

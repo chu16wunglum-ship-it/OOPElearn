@@ -4,7 +4,7 @@
 <div class="card p-4" style="max-width:640px;margin:0 auto;">
   <h4 class="fw-bold mb-1">{% if is_new %}<i class="bi bi-plus-lg text-primary"></i> เพิ่มบทเรียนใหม่{% else %}<i class="bi bi-pencil text-primary"></i> แก้ไขบทเรียน{% endif %}</h4>
   <p class="text-secondary small mb-3">วิชา {{ course.title }}</p>
-  <form method="post">
+  <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="mb-3">
       <label class="form-label">{{ form.title.label }}</label>
@@ -14,11 +14,45 @@
       <label class="form-label">{{ form.description.label }}</label>
       {{ form.description }}
     </div>
-    <div class="mb-3">
-      <label class="form-label">{{ form.youtube_url.label }}</label>
-      {{ form.youtube_url }}
+
+    <label class="form-label d-block mb-1">วิดีโอบทเรียน &mdash; เลือกได้ 1 ช่องทาง</label>
+    <div class="mb-2">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-youtube"></i></span>
+        {{ form.youtube_url }}
+      </div>
       <div class="form-text">วางลิงก์วิดีโอ YouTube เช่น https://www.youtube.com/watch?v=xxxxxxxxxxx</div>
     </div>
+    <div class="text-center text-secondary small mb-2">หรือ</div>
+    <div class="mb-3">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-upload"></i></span>
+        {{ form.video_file }}
+      </div>
+      {% if lesson.video_file %}<div class="form-text">ไฟล์ปัจจุบัน: <a href="{{ lesson.video_file.url }}" target="_blank">{{ lesson.video_file.name }}</a></div>{% endif %}
+      <div class="form-text">ถ้าอัปโหลดไฟล์ไว้ด้วย ระบบจะใช้ไฟล์ที่อัปโหลดก่อนเสมอ (ไฟล์ใหญ่อาจใช้เวลาอัปโหลดสักครู่)</div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">{{ form.slide_file.label }}</label>
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-file-earmark-slides"></i></span>
+        {{ form.slide_file }}
+      </div>
+      {% if lesson.slide_file %}<div class="form-text">ไฟล์ปัจจุบัน: <a href="{{ lesson.slide_file.url }}" target="_blank">{{ lesson.slide_file.name }}</a></div>{% endif %}
+      <div class="form-text">สำหรับเอกสาร สไลด์ประกอบการสอน (นามสกุล .pdf, .ppt, .pptx)</div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">{{ form.extra_file.label }}</label>
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-file-earmark-plus"></i></span>
+        {{ form.extra_file }}
+      </div>
+      {% if lesson.extra_file %}<div class="form-text">ไฟล์ปัจจุบัน: <a href="{{ lesson.extra_file.url }}" target="_blank">{{ lesson.extra_file.name }}</a></div>{% endif %}
+      <div class="form-text">เอกสารเสริมเพิ่มเติมนอกเหนือจากเอกสารหลักด้านบน (ไม่บังคับ)</div>
+    </div>
+
     <div class="mb-3">
       <label class="form-label">{{ form.order.label }}</label>
       {{ form.order }}

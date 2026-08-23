@@ -26,7 +26,10 @@ def dashboard(request):
 
 @teacher_required
 def teacher_dashboard(request):
-    courses = Course.objects.filter(teacher=request.user)
+    courses = sorted(
+        Course.objects.filter(teacher=request.user),
+        key=lambda c: (c.unit_number is None, c.unit_number or 0, c.created_at),
+    )
     return render(request, 'courses/teacher_dashboard.html', {'courses': courses})
 
 
@@ -93,7 +96,7 @@ def course_delete(request, pk):
 def course_roster(request, pk):
     course = _get_owned_course(request, pk)
     enrolled_ids = set(course.enrollments.values_list('student_id', flat=True))
-    all_students = User.objects.filter(created_by=request.user).order_by('first_name', 'last_name')
+    all_students = User.objects.filter(role=User.Role.STUDENT).order_by('first_name', 'last_name')
     if request.method == 'POST':
         selected_ids = set(int(i) for i in request.POST.getlist('student_ids'))
         for student in all_students:
@@ -222,7 +225,7 @@ def student_ai_summary(request, course_pk, student_id):
 def lesson_create(request, course_pk):
     course = _get_owned_course(request, course_pk)
     if request.method == 'POST':
-        form = LessonForm(request.POST)
+        form = LessonForm(request.POST, request.FILES)
         if form.is_valid():
             lesson = form.save(commit=False)
             lesson.course = course
@@ -242,7 +245,7 @@ def _get_owned_lesson(request, pk):
 def lesson_edit(request, pk):
     lesson = _get_owned_lesson(request, pk)
     if request.method == 'POST':
-        form = LessonForm(request.POST, instance=lesson)
+        form = LessonForm(request.POST, request.FILES, instance=lesson)
         if form.is_valid():
             form.save()
             messages.success(request, 'บันทึกบทเรียนแล้ว')
@@ -287,13 +290,16 @@ def lesson_detail(request, pk):
     pretest_quiz = quizzes.get('pretest')
     posttest_quiz = quizzes.get('posttest')
     invideo_quiz = quizzes.get('invideo')
+    retest_quiz = quizzes.get('retest')
 
     pretest_attempt = None
     posttest_attempt = None
+    retest_attempt = None
     progress = None
     invideo_questions = []
     video_locked = False
     posttest_locked = False
+    retest_locked = False
 
     if is_enrolled_student:
         student = request.user
@@ -302,8 +308,11 @@ def lesson_detail(request, pk):
             pretest_attempt = Attempt.objects.filter(student=student, quiz=pretest_quiz).first()
         if posttest_quiz:
             posttest_attempt = Attempt.objects.filter(student=student, quiz=posttest_quiz).first()
+        if retest_quiz:
+            retest_attempt = Attempt.objects.filter(student=student, quiz=retest_quiz).first()
         video_locked = bool(pretest_quiz and not pretest_attempt)
-        posttest_locked = bool(posttest_quiz and not progress.completed)
+        posttest_locked = bool(posttest_quiz and lesson.video_kind and not progress.completed)
+        retest_locked = bool(retest_quiz and lesson.video_kind and not progress.completed)
 
         if invideo_quiz:
             answered_qids = set()
@@ -335,6 +344,7 @@ def lesson_detail(request, pk):
         'lesson': lesson, 'course': course,
         'is_teacher_owner': is_teacher_owner, 'is_enrolled_student': is_enrolled_student,
         'pretest_quiz': pretest_quiz, 'posttest_quiz': posttest_quiz, 'invideo_quiz': invideo_quiz,
+        'retest_quiz': retest_quiz, 'retest_attempt': retest_attempt, 'retest_locked': retest_locked,
         'pretest_attempt': pretest_attempt, 'posttest_attempt': posttest_attempt,
         'progress': progress, 'video_locked': video_locked, 'posttest_locked': posttest_locked,
         'invideo_questions': invideo_questions, 'board_messages': board_messages,

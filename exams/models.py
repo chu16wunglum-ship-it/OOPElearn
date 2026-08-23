@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import FileExtensionValidator
 from django.db import models
 
 
@@ -7,10 +8,16 @@ class Quiz(models.Model):
         PRETEST = 'pretest', 'แบบทดสอบก่อนเรียน'
         POSTTEST = 'posttest', 'แบบทดสอบหลังเรียน'
         INVIDEO = 'invideo', 'คำถามระหว่างวิดีโอ'
+        RETEST = 'retest', 'แบบทดสอบหลังเรียน'
 
     lesson = models.ForeignKey('courses.Lesson', on_delete=models.CASCADE, related_name='quizzes')
     kind = models.CharField(max_length=10, choices=Kind.choices)
     title = models.CharField(max_length=200, blank=True)
+    source_file = models.FileField(
+        upload_to='quiz_sources/', blank=True, null=True,
+        validators=[FileExtensionValidator(allowed_extensions=['doc', 'docx', 'pdf'])],
+        help_text='ไฟล์ต้นฉบับของแบบทดสอบนี้ (ถ้ามี) เช่นไฟล์ Word ที่ใช้สร้างคำถาม',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

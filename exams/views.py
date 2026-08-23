@@ -1,5 +1,7 @@
 import json
+from pathlib import Path
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
@@ -8,11 +10,14 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from accounts.decorators import student_required, teacher_required
-from courses.models import Enrollment, Lesson
+from courses.models import Course, Enrollment, Lesson
 from oopelearn.ai import ask_ai
 
+from .docx_import import parse_pretest_bank
 from .forms import QuestionForm
 from .models import Attempt, Choice, Question, Quiz
+
+PRETEST_DOCX_RELPATH = 'pretest/pretest.docx'
 
 KIND_LABELS = dict(Quiz.Kind.choices)
 WIZARD_ORDER = [Quiz.Kind.PRETEST, Quiz.Kind.INVIDEO, Quiz.Kind.POSTTEST]
@@ -29,20 +34,98 @@ def _valid_kind(kind):
 
 
 @teacher_required
+def pretest_import(request):
+    docx_path = Path(settings.MEDIA_ROOT) / PRETEST_DOCX_RELPATH
+    docx_exists = docx_path.exists()
+    bank = {}
+    parse_error = None
+    if docx_exists:
+        try:
+            bank = parse_pretest_bank(docx_path)
+        except Exception:
+            parse_error = 'ไม่สามารถอ่านไฟล์ pretest.docx ได้ กรุณาตรวจสอบรูปแบบไฟล์'
+
+    TITLES = {
+        'pretest': 'แบบทดสอบก่อนเรียน',
+        'retest': 'แบบทดสอบหลังเรียน',
+    }
+
+    if request.method == 'POST':
+        if not docx_exists or parse_error:
+            messages.error(request, parse_error or 'ไม่พบไฟล์ pretest.docx')
+            return redirect('exams:pretest_import')
+
+        target_kind = request.POST.get('target_kind', 'pretest')
+        if target_kind not in TITLES:
+            raise PermissionDenied('ประเภทแบบทดสอบไม่ถูกต้อง')
+
+        unit_number = request.POST.get('unit_number')
+        course = get_object_or_404(Course, pk=request.POST.get('course_id'), teacher=request.user)
+        lesson = course.lessons.order_by('order').first()
+        questions = bank.get(int(unit_number), [])
+
+        if not lesson:
+            messages.error(request, f'{course.title} ยังไม่มีบทเรียน กรุณาสร้างบทเรียนก่อน')
+        elif not questions:
+            messages.error(request, f'ไม่พบคำถามสำหรับหน่วยที่ {unit_number} ในไฟล์ pretest.docx')
+        elif any(q['answer_index'] is None or len(q['choices']) != 4 for q in questions):
+            messages.error(request, f'ข้อมูลคำถามหน่วยที่ {unit_number} ในไฟล์ไม่ครบถ้วน กรุณาตรวจสอบไฟล์ต้นฉบับ')
+        else:
+            quiz, _ = Quiz.objects.get_or_create(lesson=lesson, kind=target_kind)
+            quiz.title = f'{TITLES[target_kind]} {course.title}'
+            quiz.source_file = PRETEST_DOCX_RELPATH
+            quiz.save()
+            quiz.questions.all().delete()
+            for q in questions:
+                question = Question.objects.create(quiz=quiz, text=q['text'], order=q['num'])
+                for idx, ctext in enumerate(q['choices']):
+                    Choice.objects.create(
+                        question=question, text=ctext, order=idx,
+                        is_correct=(idx == q['answer_index']),
+                    )
+            messages.success(request, f'นำเข้า{TITLES[target_kind]} {len(questions)} ข้อ สำหรับ{course.title} แล้ว')
+        return redirect('exams:pretest_import')
+
+    rows = []
+    courses = sorted(
+        Course.objects.filter(teacher=request.user),
+        key=lambda c: (c.unit_number is None, c.unit_number or 0, c.created_at),
+    )
+    for course in courses:
+        lesson = course.lessons.order_by('order').first()
+        pretest_quiz = lesson.quizzes.filter(kind='pretest').first() if lesson else None
+        retest_quiz = lesson.quizzes.filter(kind='retest').first() if lesson else None
+        unit_number = course.unit_number
+        rows.append({
+            'course': course,
+            'lesson': lesson,
+            'pretest_quiz': pretest_quiz,
+            'retest_quiz': retest_quiz,
+            'available_count': len(bank.get(unit_number, [])) if unit_number else 0,
+        })
+
+    return render(request, 'exams/pretest_import.html', {
+        'rows': rows, 'docx_exists': docx_exists, 'parse_error': parse_error,
+    })
+
+
+@teacher_required
 def quiz_manage(request, lesson_id, kind):
     lesson = _get_owned_lesson(request, lesson_id)
     kind = _valid_kind(kind)
     quiz, _ = Quiz.objects.get_or_create(lesson=lesson, kind=kind)
     questions = quiz.questions.prefetch_related('choices')
 
-    step_index = WIZARD_ORDER.index(kind)
-    next_kind = WIZARD_ORDER[step_index + 1] if step_index + 1 < len(WIZARD_ORDER) else None
+    step_index = WIZARD_ORDER.index(kind) if kind in WIZARD_ORDER else None
+    next_kind = (
+        WIZARD_ORDER[step_index + 1] if step_index is not None and step_index + 1 < len(WIZARD_ORDER) else None
+    )
 
     return render(request, 'exams/quiz_manage.html', {
         'lesson': lesson, 'quiz': quiz, 'questions': questions,
         'kind': kind, 'kind_label': KIND_LABELS[kind],
         'next_kind': next_kind, 'next_kind_label': KIND_LABELS.get(next_kind),
-        'wizard_step': step_index + 1, 'wizard_total': len(WIZARD_ORDER),
+        'wizard_step': (step_index + 1) if step_index is not None else None, 'wizard_total': len(WIZARD_ORDER),
     })
 
 
