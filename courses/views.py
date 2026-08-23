@@ -311,8 +311,17 @@ def lesson_detail(request, pk):
         if retest_quiz:
             retest_attempt = Attempt.objects.filter(student=student, quiz=retest_quiz).first()
         video_locked = bool(pretest_quiz and not pretest_attempt)
-        posttest_locked = bool(posttest_quiz and lesson.video_kind and not progress.completed)
         retest_locked = bool(retest_quiz and lesson.video_kind and not progress.completed)
+
+        posttest_locked = False
+        if posttest_quiz:
+            enrolled_lessons = Lesson.objects.filter(course__enrollments__student=student)
+            completed_lesson_ids = set(
+                VideoProgress.objects.filter(
+                    student=student, lesson__in=enrolled_lessons, completed=True,
+                ).values_list('lesson_id', flat=True)
+            )
+            posttest_locked = enrolled_lessons.exclude(id__in=completed_lesson_ids).exists()
 
         if invideo_quiz:
             answered_qids = set()
