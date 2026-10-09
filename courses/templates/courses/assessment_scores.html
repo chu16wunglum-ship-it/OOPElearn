@@ -1,0 +1,566 @@
+{% extends 'base.html' %}
+{% load course_filters %}
+{% block title %}คะแนนเก็บ{% endblock %}
+{% block heading %}<i class="bi bi-graph-up-fill"></i> คะแนนเก็บ{% endblock %}
+{% block content %}
+
+<style>
+  .scores-intro { color: var(--muted); margin-bottom: 1.5rem; }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 1.1rem 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+  .stat-icon {
+    width: 2.6rem;
+    height: 2.6rem;
+    flex-shrink: 0;
+    border-radius: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #fff;
+    background: var(--gradient-brand);
+  }
+
+  .stat-label { color: var(--muted); font-size: 0.78rem; font-weight: 600; }
+  .stat-value { font-size: 1.4rem; font-weight: 700; color: var(--ink); line-height: 1.2; }
+  .stat-value small { font-size: 0.65em; color: var(--muted); font-weight: 600; }
+
+  /* ===== Table card ===== */
+  .scores-card {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .scores-card-head {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .scores-card-head h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  .legend { display: flex; gap: 0.9rem; flex-wrap: wrap; font-size: 0.78rem; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .legend i { width: 0.65rem; height: 0.65rem; border-radius: 50%; display: inline-block; }
+
+  .scores-table-wrapper {
+    overflow: auto;
+    max-height: 72vh;
+  }
+
+  .scores-table {
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 760px;
+  }
+
+  .scores-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+  }
+
+  .scores-table thead th {
+    background: var(--gradient-brand);
+    color: #fff;
+    border: none;
+    padding: 0.65rem 0.6rem;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .scores-table thead tr:first-child th { padding-top: 0.85rem; }
+  .scores-table thead tr:last-child th { padding-bottom: 0.7rem; font-size: 0.85rem; opacity: 0.95; }
+  .scores-table thead th .sub { display: block; font-size: 0.72em; font-weight: 500; opacity: 0.85; }
+
+  .scores-table thead th.col-order,
+  .scores-table thead th.col-name,
+  .scores-table tbody td.col-order,
+  .scores-table tbody td.col-name {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--gradient-brand);
+  }
+  .scores-table thead th.col-name { left: 4.5rem; }
+  .scores-table tbody td.col-order,
+  .scores-table tbody td.col-name {
+    background: var(--surface);
+    z-index: 1;
+  }
+  .scores-table tbody td.col-name { left: 4.5rem; box-shadow: 2px 0 4px rgba(22,21,42,0.04); }
+
+  .scores-table tbody tr:nth-child(even) td.col-order,
+  .scores-table tbody tr:nth-child(even) td.col-name { background: #faf9ff; }
+
+  .scores-table tbody tr:hover td { background-color: #f1efff; }
+  .scores-table tbody tr:hover td.col-order,
+  .scores-table tbody tr:hover td.col-name { background-color: #e9e5ff; }
+
+  .scores-table tbody td {
+    padding: 0.6rem 0.6rem;
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-soft);
+    white-space: nowrap;
+  }
+  .scores-table tbody td.col-name { text-align: left; font-weight: 600; white-space: normal; }
+
+  .student-number { font-weight: 700; color: var(--brand-indigo-dark); }
+
+  .student-name-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: inherit;
+    text-decoration: none;
+  }
+  .student-name-link:hover { color: var(--brand-indigo-dark); text-decoration: underline; }
+  .student-name-link i { color: #e5484d; font-size: 0.85rem; opacity: 0.85; }
+
+  .score-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.3rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.82rem;
+  }
+  .score-excellent { background: rgba(79, 70, 229, 0.12); color: var(--brand-indigo-dark); }
+  .score-high { background: rgba(16, 185, 129, 0.14); color: #087f5b; }
+  .score-medium { background: rgba(245, 158, 11, 0.16); color: #92600a; }
+  .score-low { background: rgba(244, 63, 94, 0.13); color: #be123c; }
+  .score-missing { background: #f0f0f5; color: #a3a1b5; }
+
+  .legend .dot-excellent { background: var(--brand-indigo); }
+  .legend .dot-high { background: #10b981; }
+  .legend .dot-medium { background: #f59e0b; }
+  .legend .dot-low { background: #f43f5e; }
+
+  .empty-state { text-align: center; padding: 3.5rem 2rem; }
+  .empty-state-icon { font-size: 2.6rem; color: #ddd; margin-bottom: 0.75rem; }
+  .empty-state p { color: var(--muted); font-size: 1.05rem; margin-bottom: 0.25rem; }
+
+  /* ===== Bar chart card ===== */
+  .chart-card { margin-bottom: 1.5rem; overflow: hidden; }
+  .chart-card-head {
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .chart-card-head h3 { margin: 0; font-size: 1.05rem; font-weight: 700; }
+
+  .status-legend { display: flex; gap: 0.9rem; flex-wrap: wrap; font-size: 0.78rem; color: var(--muted); }
+  .status-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .status-legend i { width: 0.65rem; height: 0.65rem; border-radius: 2px; display: inline-block; }
+  .chip-good { background: #0ca30c; }
+  .chip-warning { background: #fab219; }
+  .chip-serious { background: #ec835a; }
+  .chip-critical { background: #d03b3b; }
+
+  .bar-chart { padding: 1.5rem; overflow-x: auto; }
+  .bar-chart-inner { min-width: 520px; }
+
+  .bar-chart-plot { position: relative; height: 240px; margin-left: 2.4rem; }
+  .axis-labels { position: absolute; left: -2.4rem; top: 0; bottom: 0; width: 2.1rem; }
+  .axis-labels span {
+    position: absolute; right: 0.4rem; transform: translateY(-50%);
+    font-size: 0.72rem; color: var(--muted); font-variant-numeric: tabular-nums;
+  }
+
+  .bar-chart-bars {
+    position: absolute; inset: 0;
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 0.6rem;
+    background-image: repeating-linear-gradient(to top, var(--border-soft) 0 1px, transparent 1px 25%);
+    border-bottom: 1px solid var(--baseline, #c3c2b7);
+  }
+
+  .bar-col {
+    flex: 1; max-width: 4.5rem; height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    position: relative; outline: none; cursor: default;
+  }
+  .bar-value {
+    font-size: 0.72rem; font-weight: 700; color: var(--ink);
+    margin-bottom: 0.3rem; font-variant-numeric: tabular-nums;
+  }
+  .bar-fill {
+    width: 28px; max-width: 70%; border-radius: 4px 4px 0 0; min-height: 2px;
+    transition: filter 0.15s ease;
+  }
+  .bar-col:hover .bar-fill, .bar-col:focus .bar-fill { filter: brightness(1.1); }
+  .bar-good { background: #0ca30c; }
+  .bar-warning { background: #fab219; }
+  .bar-serious { background: #ec835a; }
+  .bar-critical { background: #d03b3b; }
+
+  .bar-chart-axis-labels {
+    display: flex; justify-content: space-between; gap: 0.6rem;
+    margin-left: 2.4rem; margin-top: 0.6rem;
+  }
+  .bar-chart-axis-labels span {
+    flex: 1; max-width: 4.5rem; text-align: center;
+    font-size: 0.78rem; color: var(--muted); font-weight: 600;
+  }
+
+  .bar-tooltip {
+    position: absolute; bottom: calc(100% + 0.5rem); left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: var(--ink); color: #fff; padding: 0.45rem 0.65rem; border-radius: 0.5rem;
+    font-size: 0.75rem; line-height: 1.3; white-space: nowrap; text-align: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.15s ease, transform 0.15s ease; z-index: 5;
+  }
+  .bar-tooltip strong { display: block; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+  .bar-col:hover .bar-tooltip, .bar-col:focus .bar-tooltip { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ===== Summary breakdown card ===== */
+  .summary-card { margin-bottom: 1.5rem; overflow: hidden; }
+  .summary-card-head {
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .summary-card-head h3 { margin: 0; font-size: 1.05rem; font-weight: 700; }
+  .summary-card-head small { color: var(--muted); }
+
+  .summary-table-wrapper { overflow-x: auto; }
+  .summary-table { margin-bottom: 0; min-width: 640px; }
+  .summary-table th, .summary-table td {
+    text-align: center;
+    padding: 0.6rem 0.65rem;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .summary-table thead th {
+    background: var(--gradient-brand);
+    color: #fff;
+    font-weight: 600;
+    border: none;
+  }
+  .summary-table tbody th {
+    text-align: right;
+    font-weight: 600;
+    color: var(--ink);
+    background: #faf9ff;
+    white-space: normal;
+  }
+  .summary-table tbody tr:last-child td,
+  .summary-table tbody tr:last-child th { border-bottom: none; }
+  .summary-table td.col-total { background: #eef0ff; color: var(--brand-indigo-dark); font-weight: 700; }
+
+  @media (max-width: 575.98px) {
+    .scores-table thead th.col-name,
+    .scores-table tbody td.col-name { left: 4.5rem; }
+  }
+</style>
+
+<p class="scores-intro">ตารางสรุปคะแนนสอบของนักเรียนทุกรายวิชา เลื่อนดูได้ทั้งแนวตั้งและแนวนอน</p>
+
+{% if scores_data %}
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+    <div>
+      <div class="stat-label">จำนวนนักเรียน</div>
+      <div class="stat-value">{{ summary_stats.student_count }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-graph-up"></i></div>
+    <div>
+      <div class="stat-label">คะแนนเฉลี่ย (รวม)</div>
+      <div class="stat-value">{{ summary_stats.total_col.avg|floatformat:1 }} <small>/ 60</small></div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-arrow-up-circle-fill"></i></div>
+    <div>
+      <div class="stat-label">คะแนนสูงสุด</div>
+      <div class="stat-value">{{ summary_stats.total_col.max|floatformat:0 }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-arrow-down-circle-fill"></i></div>
+    <div>
+      <div class="stat-label">คะแนนต่ำสุด</div>
+      <div class="stat-value">{{ summary_stats.total_col.min|floatformat:0 }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-percent"></i></div>
+    <div>
+      <div class="stat-label">ร้อยละเฉลี่ย</div>
+      <div class="stat-value">{{ summary_stats.percent_col.avg|floatformat:1 }}%</div>
+    </div>
+  </div>
+</div>
+
+<div class="card chart-card">
+  <div class="chart-card-head">
+    <h3><i class="bi bi-bar-chart-line-fill"></i> คะแนนเฉลี่ยแต่ละรายการสอบ</h3>
+    <div class="status-legend">
+      <span><i class="chip-good"></i> ดี (80%+)</span>
+      <span><i class="chip-warning"></i> ปานกลาง (60-79%)</span>
+      <span><i class="chip-serious"></i> ควรพัฒนา (40-59%)</span>
+      <span><i class="chip-critical"></i> วิกฤต (&lt;40%)</span>
+    </div>
+  </div>
+  <div class="bar-chart">
+    <div class="bar-chart-inner">
+      <div class="bar-chart-plot" role="img" aria-label="กราฟแท่งแสดงคะแนนเฉลี่ยของแต่ละรายการสอบ เป็นร้อยละ">
+        <div class="axis-labels">
+          <span style="top: 0%;">100</span>
+          <span style="top: 25%;">75</span>
+          <span style="top: 50%;">50</span>
+          <span style="top: 75%;">25</span>
+          <span style="top: 100%;">0</span>
+        </div>
+        <div class="bar-chart-bars">
+          {% for label, col in summary_stats.columns %}
+            {% if forloop.counter <= 7 %}
+              <div class="bar-col" tabindex="0">
+                <div class="bar-tooltip">
+                  <strong>{{ col.avg|floatformat:1 }}%</strong>
+                  <span>{% if forloop.first %}คะแนนสอบหลังเรียน{% else %}หน่วยที่ {{ label }}{% endif %}</span>
+                </div>
+                <span class="bar-value">{{ col.avg|floatformat:0 }}%</span>
+                {% if col.avg >= 80 %}
+                  <div class="bar-fill bar-good" style="height: {{ col.avg }}%;"></div>
+                {% elif col.avg >= 60 %}
+                  <div class="bar-fill bar-warning" style="height: {{ col.avg }}%;"></div>
+                {% elif col.avg >= 40 %}
+                  <div class="bar-fill bar-serious" style="height: {{ col.avg }}%;"></div>
+                {% else %}
+                  <div class="bar-fill bar-critical" style="height: {{ col.avg }}%;"></div>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      <div class="bar-chart-axis-labels">
+        {% for label, col in summary_stats.columns %}
+          {% if forloop.counter <= 7 %}
+            <span>{% if forloop.first %}หลังเรียน{% else %}{{ label }}{% endif %}</span>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card summary-card">
+  <div class="summary-card-head">
+    <h3><i class="bi bi-bar-chart-fill"></i> สรุปคะแนนรวมทั้งชั้นเรียน</h3>
+    <small>ค่าสถิติแยกตามรายการสอบ</small>
+  </div>
+  <div class="summary-table-wrapper">
+    <table class="table summary-table">
+      <thead>
+        <tr>
+          <th style="text-align: left;">รายการ</th>
+          {% for label, col in summary_stats.columns %}
+            <th>{{ label }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>จำนวนผู้เรียน (คน)</th>
+          {% for label, col in summary_stats.columns %}<td>{{ col.count }}</td>{% endfor %}
+        </tr>
+        <tr>
+          <th>คะแนนรวมทั้งสิ้น</th>
+          {% for label, col in summary_stats.columns %}
+            {% if forloop.last %}<td>{{ col.total|floatformat:0 }}</td>
+            {% elif forloop.counter == 8 %}<td class="col-total">{{ col.total|floatformat:0 }}</td>
+            {% else %}<td>{{ col.total|floatformat:0 }}</td>{% endif %}
+          {% endfor %}
+        </tr>
+        <tr>
+          <th>คะแนนเฉลี่ย</th>
+          {% for label, col in summary_stats.columns %}
+            {% if forloop.counter >= 8 %}<td class="col-total">{{ col.avg|floatformat:2 }}{% if forloop.last %}%{% endif %}</td>
+            {% else %}<td>{{ col.avg|floatformat:2 }}</td>{% endif %}
+          {% endfor %}
+        </tr>
+        <tr>
+          <th>ส่วนเบี่ยงเบนมาตรฐาน (S.D.)</th>
+          {% for label, col in summary_stats.columns %}
+            {% if forloop.counter == 8 %}<td class="col-total">{{ col.std|floatformat:2 }}</td>
+            {% else %}<td>{{ col.std|floatformat:2 }}</td>{% endif %}
+          {% endfor %}
+        </tr>
+        <tr>
+          <th>คะแนนสูงสุด</th>
+          {% for label, col in summary_stats.columns %}
+            {% if forloop.counter >= 8 %}<td class="col-total">{{ col.max|floatformat:0 }}{% if forloop.last %}%{% endif %}</td>
+            {% else %}<td>{{ col.max|floatformat:0 }}</td>{% endif %}
+          {% endfor %}
+        </tr>
+        <tr>
+          <th>คะแนนต่ำสุด</th>
+          {% for label, col in summary_stats.columns %}
+            {% if forloop.counter >= 8 %}<td class="col-total">{{ col.min|floatformat:0 }}{% if forloop.last %}%{% endif %}</td>
+            {% else %}<td>{{ col.min|floatformat:0 }}</td>{% endif %}
+          {% endfor %}
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card scores-card">
+  <div class="scores-card-head">
+    <h3><i class="bi bi-table"></i> ตารางคะแนนเก็บ</h3>
+    <div class="legend">
+      <span><i class="dot-excellent"></i> ดีเยี่ยม (80%+)</span>
+      <span><i class="dot-high"></i> ดี (60-79%)</span>
+      <span><i class="dot-medium"></i> ปานกลาง (40-59%)</span>
+      <span><i class="dot-low"></i> ควรปรับปรุง (&lt;40%)</span>
+    </div>
+  </div>
+
+  <div class="scores-table-wrapper">
+    <table class="table scores-table">
+      <thead>
+        <tr>
+          <th class="col-order" rowspan="2" style="width: 4.5rem;">รหัสนักศึกษา</th>
+          <th class="col-name" rowspan="2" style="width: 11rem; text-align: left;">ชื่อ - นามสกุล</th>
+          <th rowspan="2">คะแนนสอบหลังเรียน<span class="sub">(30)</span></th>
+          <th colspan="6">คะแนนสอบระหว่างเรียน หน่วยที่</th>
+          <th rowspan="2">รวม<span class="sub">(60)</span></th>
+          <th rowspan="2">ร้อยละ</th>
+        </tr>
+        <tr>
+          {% for i in "123456" %}
+          <th>{{ i }}<span class="sub">(10)</span></th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in scores_data %}
+        <tr>
+          <td class="col-order"><span class="student-number">{{ row.student.student_code }}</span></td>
+          <td class="col-name">
+            <a href="{% url 'courses:student_score_pdf' row.student.pk %}" class="student-name-link" target="_blank" rel="noopener" title="ดาวน์โหลด PDF คะแนนของ {{ row.student.first_name }}">
+              {{ row.student.first_name }} {{ row.student.last_name }}
+              <i class="bi bi-file-earmark-pdf"></i>
+            </a>
+          </td>
+          <td>
+            {% if row.posttest_scores %}
+              {% with posttest=row.posttest_scores|first %}
+                {% if posttest.score >= 80 %}
+                  <span class="score-pill score-excellent">{{ posttest.score|floatformat:0 }}</span>
+                {% elif posttest.score >= 60 %}
+                  <span class="score-pill score-high">{{ posttest.score|floatformat:0 }}</span>
+                {% elif posttest.score >= 40 %}
+                  <span class="score-pill score-medium">{{ posttest.score|floatformat:0 }}</span>
+                {% else %}
+                  <span class="score-pill score-low">{{ posttest.score|floatformat:0 }}</span>
+                {% endif %}
+              {% endwith %}
+            {% else %}
+              <span class="score-pill score-missing">-</span>
+            {% endif %}
+          </td>
+          {% for i in "123456" %}
+            {% with invideo=row.invideo_scores|get_index:forloop.counter0 %}
+              <td>
+                {% if invideo %}
+                  {% if invideo.score >= 80 %}
+                    <span class="score-pill score-excellent">{{ invideo.score|floatformat:0 }}</span>
+                  {% elif invideo.score >= 60 %}
+                    <span class="score-pill score-high">{{ invideo.score|floatformat:0 }}</span>
+                  {% elif invideo.score >= 40 %}
+                    <span class="score-pill score-medium">{{ invideo.score|floatformat:0 }}</span>
+                  {% else %}
+                    <span class="score-pill score-low">{{ invideo.score|floatformat:0 }}</span>
+                  {% endif %}
+                {% else %}
+                  <span class="score-pill score-missing">-</span>
+                {% endif %}
+              </td>
+            {% endwith %}
+          {% endfor %}
+          <td>
+            {% if row.total_score %}
+              {% if row.total_score >= 48 %}
+                <span class="score-pill score-excellent">{{ row.total_score|floatformat:0 }}</span>
+              {% elif row.total_score >= 36 %}
+                <span class="score-pill score-high">{{ row.total_score|floatformat:0 }}</span>
+              {% elif row.total_score >= 24 %}
+                <span class="score-pill score-medium">{{ row.total_score|floatformat:0 }}</span>
+              {% else %}
+                <span class="score-pill score-low">{{ row.total_score|floatformat:0 }}</span>
+              {% endif %}
+            {% else %}
+              <span class="score-pill score-missing">-</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if row.average_score %}
+              {% if row.average_score >= 80 %}
+                <span class="score-pill score-excellent">{{ row.average_score|floatformat:0 }}%</span>
+              {% elif row.average_score >= 60 %}
+                <span class="score-pill score-high">{{ row.average_score|floatformat:0 }}%</span>
+              {% elif row.average_score >= 40 %}
+                <span class="score-pill score-medium">{{ row.average_score|floatformat:0 }}%</span>
+              {% else %}
+                <span class="score-pill score-low">{{ row.average_score|floatformat:0 }}%</span>
+              {% endif %}
+            {% else %}
+              <span class="score-pill score-missing">-</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+    <p>ยังไม่มีข้อมูลคะแนนสำหรับแสดง</p>
+    <small class="text-secondary">เพิ่มนักเรียนและคะแนนสอบเพื่อดูรายงานคะแนนที่นี่</small>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

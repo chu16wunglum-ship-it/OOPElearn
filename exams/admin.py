@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import AnswerRecord, Attempt, Choice, Question, Quiz
+from .models import AnswerRecord, Attempt, BossBattleResult, Choice, Question, Quiz
 
 
 class ChoiceInline(admin.TabularInline):
@@ -32,3 +32,8 @@ class AttemptAdmin(admin.ModelAdmin):
 
 admin.site.register(Choice)
 admin.site.register(AnswerRecord)
+
+
+@admin.register(BossBattleResult)
+class BossBattleResultAdmin(admin.ModelAdmin):
+    list_display = ('student', 'lesson', 'won', 'best_boss_hp_left', 'play_count', 'updated_at')

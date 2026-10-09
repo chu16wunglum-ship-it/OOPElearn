@@ -6,6 +6,8 @@ app_name = 'courses'
 
 urlpatterns = [
     path('teacher/', views.teacher_dashboard, name='teacher_dashboard'),
+    path('teacher/scores/', views.assessment_scores, name='assessment_scores'),
+    path('teacher/scores/<int:student_id>/pdf/', views.student_score_pdf, name='student_score_pdf'),
     path('student/', views.student_dashboard, name='student_dashboard'),
     path('create/', views.course_create, name='course_create'),
     path('<int:pk>/', views.course_detail, name='course_detail'),

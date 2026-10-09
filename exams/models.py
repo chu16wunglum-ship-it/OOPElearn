@@ -92,6 +92,21 @@ class Attempt(models.Model):
         self.save(update_fields=['score'])
 
 
+class BossBattleResult(models.Model):
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='boss_battle_results')
+    lesson = models.ForeignKey('courses.Lesson', on_delete=models.CASCADE, related_name='boss_battle_results')
+    won = models.BooleanField(default=False)
+    best_boss_hp_left = models.PositiveIntegerField(default=0, help_text='HP บอสที่เหลือน้อยที่สุดในรอบที่ชนะ (ยิ่งน้อยยิ่งเก่ง)')
+    play_count = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('student', 'lesson')
+
+    def __str__(self):
+        return f'{self.student} - {self.lesson} ({"ชนะ" if self.won else "ยังไม่ชนะ"})'
+
+
 class AnswerRecord(models.Model):
     attempt = models.ForeignKey(Attempt, on_delete=models.CASCADE, related_name='answers')
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answer_records')

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}ด่านปราบบอส{% endblock %}
+{% block heading %}<i class="bi bi-lightning-charge-fill"></i> ด่านปราบบอส{% endblock %}
+{% block content %}
+
+<p class="text-secondary mb-4">ปราบบอสประจำแต่ละหน่วยเพื่อทบทวนเนื้อหา ต้องดูวิดีโอบทเรียนให้ครบ 90% ก่อนถึงจะปลดล็อกด่านได้ และต้องชนะให้ครบทุกด่านก่อนทำแบบทดสอบหลังเรียน</p>
+
+{% if stages %}
+<div class="row g-4">
+  {% for stage in stages %}
+  {% cycle '1' '2' '3' '4' '5' '6' as covernum silent %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card card-course h-100 {% if stage.locked %}boss-stage-card-locked{% endif %}">
+      <div class="course-cover cover-{{ covernum }} boss-stage-cover">
+        <span class="unit-pill">ด่านที่ {{ stage.number }}</span>
+        {% if stage.won %}
+          <i class="bi bi-trophy-fill boss-stage-status-icon boss-stage-status-won"></i>
+        {% elif stage.locked %}
+          <i class="bi bi-lock-fill boss-stage-status-icon"></i>
+        {% else %}
+          <i class="bi bi-bug-fill boss-stage-status-icon"></i>
+        {% endif %}
+      </div>
+      <div class="card-body d-flex flex-column">
+        <h5 class="fw-semibold mb-1">{{ stage.lesson.title }}</h5>
+        <p class="text-secondary small mb-3 flex-grow-1">
+          {% if stage.won %}
+            <i class="bi bi-trophy-fill text-warning"></i> ปราบบอสสำเร็จแล้ว (เล่นไป {{ stage.play_count }} ครั้ง)
+          {% elif stage.locked %}
+            ดูวิดีโอบทเรียนนี้ให้ครบ 90% ก่อนเพื่อปลดล็อกด่าน
+          {% else %}
+            พร้อมปราบบอสแล้ว! ตอบคำถามให้ถูกเพื่อโจมตี
+          {% endif %}
+        </p>
+        {% if stage.locked %}
+          <a href="{% url 'courses:lesson_detail' stage.lesson.pk %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-play-circle"></i> ไปดูวิดีโอบทเรียน</a>
+        {% else %}
+          <a href="{% url 'exams:boss_battle_play' stage.lesson.pk %}" class="btn btn-sm {% if stage.won %}btn-outline-warning{% else %}btn-warning{% endif %} fw-semibold">
+            {% if stage.won %}<i class="bi bi-arrow-repeat"></i> เล่นอีกครั้ง{% else %}<i class="bi bi-lightning-charge-fill"></i> เข้าสู่ด่านบอส{% endif %}
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card p-5 text-center">
+  <i class="bi bi-emoji-neutral fs-1 text-secondary mb-2"></i>
+  <p class="text-secondary mb-0">ยังไม่มีด่านปราบบอสให้เล่นตอนนี้ รอครูเพิ่มคำถามก่อนเรียนหรือระหว่างวิดีโอในบทเรียนก่อนนะ</p>
+</div>
+{% endif %}
+{% endblock %}

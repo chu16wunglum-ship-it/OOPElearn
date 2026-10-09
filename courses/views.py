@@ -1,16 +1,23 @@
+import io
 import json
+from urllib.parse import quote
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.staticfiles import finders
 from django.core.exceptions import PermissionDenied
-from django.http import JsonResponse
+from django.db import models
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from xhtml2pdf import pisa
 
 from accounts.decorators import student_required, teacher_required
 from accounts.models import User
-from exams.models import Attempt
+from exams.models import Attempt, BossBattleResult, Quiz
 from oopelearn.ai import ask_ai
 
 from .forms import CourseForm, LessonForm
@@ -153,6 +160,142 @@ def course_report(request, pk):
     return render(request, 'courses/course_report.html', {
         'course': course, 'lessons': lessons, 'rows': rows,
     })
+
+
+def _build_student_score_row(student, courses, order=None):
+    row = {
+        'order': order,
+        'student': student,
+        'posttest_scores': (
+            [{'score': student.final_posttest_score}]
+            if student.final_posttest_score is not None else []
+        ),
+        'invideo_scores': [],
+    }
+
+    # One unit score per course: that course's posttest quiz (out of 10 each)
+    for course in courses:
+        course_posttest = None
+        for lesson in course.lessons.all().order_by('order'):
+            pq = lesson.quizzes.filter(kind='posttest').first()
+            if pq:
+                course_posttest = pq
+                break
+        if course_posttest:
+            attempt = Attempt.objects.filter(student=student, quiz=course_posttest).first()
+            # Attempt.score is stored as a 0-100 percentage (shared with other pages);
+            # convert back to the gradebook's out-of-10 scale for display here.
+            score = round(attempt.score / 10, 1) if attempt else 0
+            row['invideo_scores'].append({'score': score, 'course': course})
+
+    # Normalize fixed-width values for column stats (always 1 posttest + 6 unit slots)
+    row['posttest_value'] = row['posttest_scores'][0]['score'] if row['posttest_scores'] else 0
+    row['invideo_values'] = [
+        row['invideo_scores'][i]['score'] if i < len(row['invideo_scores']) else 0
+        for i in range(6)
+    ]
+
+    # "รวม" / "ร้อยละ" are the in-video units only (max 60), matching the school's gradebook convention
+    row['total_score'] = sum(row['invideo_values'])
+    row['average_score'] = round(row['total_score'] / 60 * 100, 1) if row['invideo_scores'] else 0
+    row['percent_value'] = row['average_score']
+    return row
+
+
+def _teacher_courses(teacher):
+    return sorted(
+        Course.objects.filter(teacher=teacher),
+        key=lambda c: (c.unit_number is None, c.unit_number or 0, c.created_at),
+    )
+
+
+@teacher_required
+def assessment_scores(request):
+    courses = _teacher_courses(request.user)
+    students = User.objects.filter(
+        enrollments__course__in=courses, role=User.Role.STUDENT,
+    ).distinct().order_by('first_name', 'last_name')
+
+    scores_data = [
+        _build_student_score_row(student, courses, order=idx)
+        for idx, student in enumerate(students, 1)
+    ]
+
+    import statistics as stats_lib
+
+    def _col_stats(values):
+        if not values:
+            return {'count': 0, 'total': 0, 'avg': 0, 'std': 0, 'max': 0, 'min': 0}
+        total = sum(values)
+        avg = total / len(values)
+        std = round(stats_lib.stdev(values), 2) if len(values) > 1 else 0
+        return {
+            'count': len(values),
+            'total': round(total, 2),
+            'avg': round(avg, 2),
+            'std': std,
+            'max': round(max(values), 2),
+            'min': round(min(values), 2),
+        }
+
+    posttest_col = [row['posttest_value'] for row in scores_data]
+    invideo_cols = [[row['invideo_values'][i] for row in scores_data] for i in range(6)]
+    total_col = [row['total_score'] for row in scores_data]
+    percent_col = [row['percent_value'] for row in scores_data]
+
+    column_labels = ['หลังเรียน', '1', '2', '3', '4', '5', '6', 'รวม', 'ร้อยละ']
+    columns = [_col_stats(posttest_col)] + [_col_stats(c) for c in invideo_cols] + [
+        _col_stats(total_col), _col_stats(percent_col),
+    ]
+
+    summary_stats = {
+        'student_count': len(scores_data),
+        'columns': list(zip(column_labels, columns)),
+        'total_col': columns[7],
+        'percent_col': columns[8],
+    }
+
+    return render(request, 'courses/assessment_scores.html', {
+        'scores_data': scores_data,
+        'courses': courses,
+        'summary_stats': summary_stats,
+    })
+
+
+def _pdf_link_callback(uri, rel):
+    if uri.startswith(settings.STATIC_URL):
+        path = finders.find(uri.replace(settings.STATIC_URL, '', 1))
+        if path:
+            return path
+    return uri
+
+
+@teacher_required
+def student_score_pdf(request, student_id):
+    courses = _teacher_courses(request.user)
+    student = get_object_or_404(User, pk=student_id, role=User.Role.STUDENT)
+    if not Enrollment.objects.filter(student=student, course__in=courses).exists():
+        raise PermissionDenied('นักเรียนคนนี้ไม่ได้ลงทะเบียนในวิชาของคุณ')
+    row = _build_student_score_row(student, courses)
+
+    html = render_to_string('courses/student_score_pdf.html', {
+        'student': student,
+        'row': row,
+        'teacher': request.user,
+        'generated_at': timezone.now(),
+    })
+
+    buffer = io.BytesIO()
+    pisa.CreatePDF(html, dest=buffer, link_callback=_pdf_link_callback)
+
+    filename = f"คะแนน-{student.student_code or student.username}.pdf"
+    ascii_filename = f"score-{student.student_code or student.username}.pdf"
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = (
+        f'attachment; filename="{ascii_filename}"; '
+        f"filename*=UTF-8''{quote(filename)}"
+    )
+    return response
 
 
 @teacher_required
@@ -321,7 +464,18 @@ def lesson_detail(request, pk):
                     student=student, lesson__in=enrolled_lessons, completed=True,
                 ).values_list('lesson_id', flat=True)
             )
-            posttest_locked = enrolled_lessons.exclude(id__in=completed_lesson_ids).exists()
+            lessons_needing_boss = enrolled_lessons.filter(
+                quizzes__kind__in=[Quiz.Kind.PRETEST, Quiz.Kind.INVIDEO],
+            ).distinct()
+            won_lesson_ids = set(
+                BossBattleResult.objects.filter(
+                    student=student, lesson__in=lessons_needing_boss, won=True,
+                ).values_list('lesson_id', flat=True)
+            )
+            posttest_locked = (
+                enrolled_lessons.exclude(id__in=completed_lesson_ids).exists()
+                or lessons_needing_boss.exclude(id__in=won_lesson_ids).exists()
+            )
 
         if invideo_quiz:
             answered_qids = set()

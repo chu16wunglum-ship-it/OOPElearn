@@ -1,0 +1,127 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face {
+    font-family: "NotoSansThai";
+    src: url("{% static 'fonts/NotoSansThai.ttf' %}");
+  }
+  @page {
+    size: A4;
+    margin: 2.2cm 1.8cm;
+  }
+  body {
+    font-family: "NotoSansThai";
+    font-size: 11pt;
+    color: #16152a;
+  }
+  .brand {
+    font-size: 10pt;
+    color: #6b7280;
+    margin-bottom: 2px;
+  }
+  h1 {
+    font-size: 16pt;
+    color: #4f46e5;
+    margin: 0 0 14px 0;
+  }
+  .info-table {
+    width: 100%;
+    margin-bottom: 18px;
+  }
+  .info-table td {
+    padding: 3px 0;
+    font-size: 11pt;
+  }
+  .info-label {
+    color: #6b7280;
+    width: 110px;
+  }
+  table.scores {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 18px;
+  }
+  table.scores th, table.scores td {
+    border: 1px solid #c9c6e8;
+    padding: 7px 6px;
+    text-align: center;
+    font-size: 10pt;
+  }
+  table.scores th {
+    background-color: #4f46e5;
+    color: #ffffff;
+    font-weight: bold;
+  }
+  table.scores td.label {
+    text-align: left;
+    font-weight: bold;
+    background-color: #f3f2fb;
+  }
+  td.total {
+    background-color: #eef0ff;
+    color: #4338ca;
+    font-weight: bold;
+  }
+  .footer-note {
+    font-size: 9pt;
+    color: #9ca3af;
+    margin-top: 24px;
+  }
+  .signature {
+    margin-top: 48px;
+    font-size: 10pt;
+  }
+</style>
+</head>
+<body>
+  <div class="brand">OOPElearn</div>
+  <h1>ใบรายงานคะแนนเก็บ</h1>
+
+  <table class="info-table">
+    <tr><td class="info-label">ชื่อ-นามสกุล</td><td>{{ student.first_name }} {{ student.last_name }}</td></tr>
+    <tr><td class="info-label">รหัสนักศึกษา</td><td>{{ student.student_code|default:'-' }}</td></tr>
+    <tr><td class="info-label">ครูผู้สอน</td><td>{{ teacher.first_name|default:teacher.username }} {{ teacher.last_name }}</td></tr>
+    <tr><td class="info-label">วันที่ออกรายงาน</td><td>{{ generated_at|date:"d/m/Y H:i" }}</td></tr>
+  </table>
+
+  <table class="scores">
+    <tr>
+      <th style="width:28%;">รายการ</th>
+      <th>คะแนน</th>
+      <th>คะแนนเต็ม</th>
+    </tr>
+    <tr>
+      <td class="label">คะแนนสอบหลังเรียน</td>
+      <td>{{ row.posttest_value|default:'-' }}</td>
+      <td>30</td>
+    </tr>
+    {% for value in row.invideo_values %}
+    <tr>
+      <td class="label">คะแนนสอบระหว่างเรียน หน่วยที่ {{ forloop.counter }}</td>
+      <td>{{ value }}</td>
+      <td>10</td>
+    </tr>
+    {% endfor %}
+    <tr>
+      <td class="label total">รวม</td>
+      <td class="total">{{ row.total_score|floatformat:0 }}</td>
+      <td class="total">60</td>
+    </tr>
+    <tr>
+      <td class="label total">ร้อยละ</td>
+      <td class="total" colspan="2">{{ row.average_score|floatformat:1 }}%</td>
+    </tr>
+  </table>
+
+  <div class="signature">
+    ลงชื่อ ....................................................... ครูผู้สอน
+  </div>
+
+  <div class="footer-note">
+    ออกรายงานโดยระบบ OOPElearn &middot; เอกสารนี้สร้างขึ้นอัตโนมัติ
+  </div>
+</body>
+</html>

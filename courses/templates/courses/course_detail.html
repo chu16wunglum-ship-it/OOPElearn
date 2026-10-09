@@ -2,53 +2,68 @@
 {% block title %}{{ course.title }}{% endblock %}
 {% block heading %}{{ course.title }}{% endblock %}
 {% block content %}
-<div class="dash-section-info mb-4">
-  <p class="text-secondary mb-2">{{ course.description|default:'ยังไม่มีคำอธิบายรายวิชา' }}</p>
-    <div class="d-flex gap-2">
-      <span class="badge badge-soft"><i class="bi bi-play-btn"></i> {{ course.lesson_count }} บทเรียน</span>
-      <span class="badge badge-soft"><i class="bi bi-people"></i> {{ course.student_count }} นักเรียน</span>
+
+<div class="course-hero"{% if course.cover_image_url %} style="background-image:linear-gradient(100deg, rgba(79,70,229,0.82), rgba(139,92,246,0.72)), url('{{ course.cover_image_url }}');"{% endif %}>
+  {% if course.unit_number %}<span class="unit-pill">หน่วยที่ {{ course.unit_number }}</span>{% endif %}
+  <div class="course-hero-body">
+    <h3 class="course-hero-title">{{ course.title }}</h3>
+    <p class="course-hero-desc">{{ course.description|default:'ยังไม่มีคำอธิบายรายวิชา' }}</p>
+    <div class="d-flex gap-2 flex-wrap">
+      <span class="badge course-hero-badge"><i class="bi bi-play-btn"></i> {{ course.lesson_count }} บทเรียน</span>
+      <span class="badge course-hero-badge"><i class="bi bi-people"></i> {{ course.student_count }} นักเรียน</span>
     </div>
-  </div>
-  <div class="d-flex gap-2 flex-wrap">
-    <a href="{% url 'courses:course_roster' course.pk %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-people"></i> รายชื่อนักเรียน</a>
-    <a href="{% url 'courses:course_report' course.pk %}" class="btn btn-outline-success btn-sm"><i class="bi bi-graph-up"></i> ผลสรุป</a>
-    <a href="{% url 'courses:course_edit' course.pk %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i> แก้ไข</a>
-    <a href="{% url 'courses:course_delete' course.pk %}" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></a>
   </div>
 </div>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h5 class="fw-semibold mb-0">บทเรียน</h5>
+<div class="card p-3 p-md-4 mb-4">
+  <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
+    <h6 class="fw-semibold mb-0 text-secondary"><i class="bi bi-gear"></i> จัดการรายวิชา</h6>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'courses:course_roster' course.pk %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-people"></i> รายชื่อนักเรียน</a>
+      <a href="{% url 'courses:course_report' course.pk %}" class="btn btn-outline-success btn-sm"><i class="bi bi-graph-up"></i> ผลสรุป</a>
+      <a href="{% url 'courses:course_edit' course.pk %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i> แก้ไข</a>
+      <a href="{% url 'courses:course_delete' course.pk %}" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> ลบ</a>
+    </div>
+  </div>
+</div>
+
+<div class="dash-section-head">
+  <h5 class="fw-bold mb-0">บทเรียน</h5>
   <a href="{% url 'courses:lesson_create' course.pk %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> เพิ่มบทเรียน</a>
 </div>
 
 <div class="d-flex flex-column gap-2">
   {% for lesson in lessons %}
-  <div class="lesson-row d-flex flex-wrap align-items-center gap-3">
-    <span class="lesson-order">{{ forloop.counter }}</span>
-    <div class="flex-grow-1">
-      <div class="fw-semibold">{{ lesson.title }}</div>
-      <div class="small text-secondary">{{ lesson.description|truncatewords:14 }}</div>
-      <div class="d-flex gap-2 mt-1 flex-wrap">
-        <a href="{% url 'exams:quiz_manage' lesson.id 'pretest' %}" class="badge badge-soft text-decoration-none">
-          <i class="bi bi-clipboard2-check"></i> ก่อนเรียน
-        </a>
-        <a href="{% url 'exams:quiz_manage' lesson.id 'invideo' %}" class="badge badge-soft text-decoration-none">
-          <i class="bi bi-camera-reels"></i> คำถามระหว่างวิดีโอ
-        </a>
-        <a href="{% url 'exams:quiz_manage' lesson.id 'posttest' %}" class="badge badge-soft text-decoration-none">
-          <i class="bi bi-clipboard2-data"></i> หลังเรียน
-        </a>
+  <div class="lesson-row">
+    <div class="d-flex flex-wrap align-items-start gap-3">
+      <span class="lesson-order">{{ forloop.counter }}</span>
+      <div class="flex-grow-1" style="min-width:200px;">
+        <div class="fw-semibold">{{ lesson.title }}</div>
+        <div class="small text-secondary mb-2">{{ lesson.description|truncatewords:14|default:'ยังไม่มีคำอธิบาย' }}</div>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="{% url 'exams:quiz_manage' lesson.id 'pretest' %}" class="badge badge-soft text-decoration-none">
+            <i class="bi bi-clipboard2-check"></i> ก่อนเรียน
+          </a>
+          <a href="{% url 'exams:quiz_manage' lesson.id 'invideo' %}" class="badge badge-soft text-decoration-none">
+            <i class="bi bi-camera-reels"></i> คำถามระหว่างวิดีโอ
+          </a>
+          <a href="{% url 'exams:quiz_manage' lesson.id 'posttest' %}" class="badge badge-soft text-decoration-none">
+            <i class="bi bi-clipboard2-data"></i> หลังเรียน
+          </a>
+        </div>
       </div>
-    </div>
-    <div class="d-flex gap-2">
-      <a href="{% url 'courses:lesson_detail' lesson.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> ดูตัวอย่าง</a>
-      <a href="{% url 'courses:lesson_edit' lesson.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
-      <a href="{% url 'courses:lesson_delete' lesson.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+      <div class="lesson-row-actions d-flex gap-2 flex-shrink-0 ms-auto">
+        <a href="{% url 'courses:lesson_detail' lesson.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> ดูตัวอย่าง</a>
+        <a href="{% url 'courses:lesson_edit' lesson.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+        <a href="{% url 'courses:lesson_delete' lesson.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+      </div>
     </div>
   </div>
   {% empty %}
-  <div class="card p-4 text-center text-secondary">ยังไม่มีบทเรียน คลิก "เพิ่มบทเรียน" เพื่อเริ่มต้น</div>
+  <div class="card p-5 text-center text-secondary">
+    <i class="bi bi-journal-plus fs-1 mb-2 d-block"></i>
+    ยังไม่มีบทเรียน คลิก "เพิ่มบทเรียน" เพื่อเริ่มต้น
+  </div>
   {% endfor %}
 </div>
 {% endblock %}

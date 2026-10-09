@@ -9,6 +9,10 @@ class User(AbstractUser):
 
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.STUDENT)
     student_code = models.CharField(max_length=20, blank=True, help_text='รหัสนักเรียน')
+    final_posttest_score = models.FloatField(
+        null=True, blank=True,
+        help_text='คะแนนสอบหลังเรียนรวม (เต็ม 30, ไม่ผูกกับแบบทดสอบรายหน่วย)',
+    )
     created_by = models.ForeignKey(
         'self', null=True, blank=True, on_delete=models.SET_NULL,
         related_name='created_students', limit_choices_to={'role': Role.TEACHER},

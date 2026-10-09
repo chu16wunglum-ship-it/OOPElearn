@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}ด่านปราบบอส - {{ lesson.title }}{% endblock %}
+{% block heading %}ด่านปราบบอส{% endblock %}
+{% block content %}
+<a href="{% url 'courses:lesson_detail' lesson.pk %}" class="text-decoration-none small text-secondary">
+  <i class="bi bi-arrow-left"></i> {{ lesson.title }}
+</a>
+<p class="text-secondary small mt-2 mb-0"><i class="bi bi-info-circle"></i> ตอบคำถามให้ถูกเพื่อโจมตีบอส ตอบผิดจะโดนสวนกลับ ลดเลือดให้บอสหมดก่อนเลือดคุณจะหมดเพื่อชนะ</p>
+
+<div class="boss-arena card mt-3 p-3 p-md-4">
+  <div class="boss-arena-bg"><span class="boss-bg-grid"></span></div>
+
+  <svg class="boss-sprite-defs" aria-hidden="true">
+    <defs>
+      <radialGradient id="gradSkin" cx="35%" cy="28%" r="75%">
+        <stop offset="0%" stop-color="#ffe9d1"/>
+        <stop offset="100%" stop-color="#e8a56d"/>
+      </radialGradient>
+      <radialGradient id="gradHoodie" cx="35%" cy="15%" r="90%">
+        <stop offset="0%" stop-color="#8b7bf0"/>
+        <stop offset="55%" stop-color="#4f46e5"/>
+        <stop offset="100%" stop-color="#352b9e"/>
+      </radialGradient>
+      <linearGradient id="gradHair" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#3c3270"/>
+        <stop offset="100%" stop-color="#1c1738"/>
+      </linearGradient>
+      <radialGradient id="gradScreen" cx="50%" cy="30%" r="80%">
+        <stop offset="0%" stop-color="#e0fbff"/>
+        <stop offset="100%" stop-color="#38bdf8"/>
+      </radialGradient>
+      <radialGradient id="gradBossBody" cx="32%" cy="22%" r="85%">
+        <stop offset="0%" stop-color="#ff9fb0"/>
+        <stop offset="55%" stop-color="#f43f5e"/>
+        <stop offset="100%" stop-color="#a81f38"/>
+      </radialGradient>
+      <radialGradient id="gradEye" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#4b4b63"/>
+        <stop offset="100%" stop-color="#0d0d1a"/>
+      </radialGradient>
+      <radialGradient id="gradHorn" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#fff6d6"/>
+        <stop offset="100%" stop-color="#ffcf4d"/>
+      </radialGradient>
+    </defs>
+  </svg>
+
+  <div class="boss-hud">
+    <span class="boss-hud-badge"><i class="bi bi-patch-question-fill"></i> <span id="boss-question-counter">คำถามข้อที่ 1</span></span>
+    <span class="boss-hud-badge boss-hud-badge-muted"><i class="bi bi-check2-circle"></i> โจมตีสำเร็จ <span id="boss-correct-counter">0</span> ครั้ง</span>
+  </div>
+
+  <div class="boss-arena-row">
+    <div class="boss-fighter boss-fighter-student">
+      <div class="boss-sprite-stage" id="student-stage">
+        <div class="boss-fx-layer" id="student-fx-layer"></div>
+        <svg id="student-sprite" class="boss-sprite-svg sprite-bob" viewBox="0 0 120 150">
+          <ellipse cx="60" cy="140" rx="30" ry="7" class="sprite-shadow"/>
+          <g id="student-sprite-body" class="sprite-body-3d">
+            <rect x="30" y="60" width="60" height="55" rx="18" fill="url(#gradHoodie)"/>
+            <ellipse cx="46" cy="70" rx="10" ry="14" class="sprite-shine"/>
+            <rect x="38" y="95" width="44" height="26" rx="4" fill="#15142a"/>
+            <rect x="42" y="98" width="36" height="16" rx="2" fill="url(#gradScreen)" class="sprite-glow"/>
+            <circle cx="60" cy="40" r="24" fill="url(#gradSkin)"/>
+            <ellipse cx="52" cy="32" rx="8" ry="6" class="sprite-shine"/>
+            <path d="M36 30 Q60 5 84 30 L84 42 Q60 20 36 42 Z" fill="url(#gradHair)"/>
+            <circle cx="51" cy="42" r="3" fill="#2b2250"/>
+            <circle cx="69" cy="42" r="3" fill="#2b2250"/>
+            <path d="M52 50 Q60 55 68 50" stroke="#2b2250" stroke-width="2" fill="none" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </div>
+      <div class="boss-nameplate">
+        <span class="boss-nameplate-icon"><i class="bi bi-person-fill"></i></span>
+        <span class="boss-fighter-name">คุณ</span>
+      </div>
+      <div class="progress boss-hp-bar">
+        <div id="student-hp-fill" class="progress-bar boss-hp-fill-good" style="width:100%"></div>
+      </div>
+      <div class="small text-secondary" id="student-hp-text">{{ student_hp }} / {{ student_hp }} HP</div>
+    </div>
+
+    <div class="boss-arena-vs"><span>VS</span></div>
+
+    <div class="boss-fighter boss-fighter-boss">
+      <div class="boss-sprite-stage" id="boss-stage">
+        <div class="boss-fx-layer" id="boss-fx-layer"></div>
+        <svg id="boss-sprite" class="boss-sprite-svg sprite-bob" viewBox="0 0 140 150">
+          <ellipse cx="70" cy="140" rx="36" ry="7" class="sprite-shadow"/>
+          <g id="boss-sprite-body" class="sprite-body-3d">
+            <line x1="50" y1="25" x2="38" y2="5" stroke="#c23652" stroke-width="4" stroke-linecap="round"/>
+            <line x1="90" y1="25" x2="102" y2="5" stroke="#c23652" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="38" cy="5" r="5" fill="url(#gradHorn)"/>
+            <circle cx="102" cy="5" r="5" fill="url(#gradHorn)"/>
+            <path d="M30 60 Q20 20 70 20 Q120 20 110 60 Q120 110 70 125 Q20 110 30 60 Z" fill="url(#gradBossBody)"/>
+            <ellipse cx="55" cy="40" rx="12" ry="16" class="sprite-shine"/>
+            <circle cx="55" cy="65" r="10" fill="url(#gradEye)"/>
+            <circle cx="85" cy="65" r="10" fill="url(#gradEye)"/>
+            <circle cx="57" cy="63" r="3" fill="#fff" class="sprite-glow"/>
+            <circle cx="87" cy="63" r="3" fill="#fff" class="sprite-glow"/>
+            <path d="M48 88 L56 98 L64 88 L70 98 L76 88 L84 98 L92 88" stroke="#5c0f1f" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+        </svg>
+      </div>
+      <div class="boss-nameplate">
+        <span class="boss-nameplate-icon boss-nameplate-icon-danger"><i class="bi bi-bug-fill"></i></span>
+        <span class="boss-fighter-name">บอสบั๊ก: {{ lesson.title }}</span>
+      </div>
+      <div class="progress boss-hp-bar">
+        <div id="boss-hp-fill" class="progress-bar boss-hp-fill-good" style="width:100%"></div>
+      </div>
+      <div class="small text-secondary" id="boss-hp-text">{{ boss_hp }} / {{ boss_hp }} HP</div>
+    </div>
+  </div>
+
+  <div id="boss-battle-log" class="boss-battle-log mt-3"></div>
+
+  <div id="boss-question-panel" class="boss-question-panel mt-2">
+    <div class="boss-question-bubble">
+      <p id="boss-question-text" class="fw-semibold mb-0"></p>
+    </div>
+    <div id="boss-choices" class="boss-choices-grid"></div>
+  </div>
+
+  <div id="boss-end-panel" class="text-center py-4 d-none">
+    <div class="boss-end-ring">
+      <div id="boss-end-emoji" class="boss-end-emoji"></div>
+    </div>
+    <h4 id="boss-end-title" class="fw-bold mb-2"></h4>
+    <p id="boss-end-text" class="text-secondary mb-4"></p>
+    <div class="d-flex justify-content-center gap-2 flex-wrap">
+      <button type="button" id="boss-retry-btn" class="btn btn-warning fw-semibold"><i class="bi bi-arrow-repeat"></i> ลองอีกครั้ง</button>
+      <a href="{% url 'courses:lesson_detail' lesson.pk %}" class="btn btn-outline-light">กลับไปที่บทเรียน</a>
+    </div>
+  </div>
+
+  <div id="boss-confetti-layer" class="boss-confetti-layer"></div>
+</div>
+
+{{ questions_payload|json_script:"boss-questions-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.BOSS_BATTLE_CONFIG = {
+    questions: JSON.parse(document.getElementById('boss-questions-data').textContent),
+    answerUrl: "{% url 'exams:boss_battle_answer' lesson.id %}",
+    finishUrl: "{% url 'exams:boss_battle_finish' lesson.id %}",
+    bossHp: {{ boss_hp }},
+    studentHp: {{ student_hp }},
+    dmgCorrect: {{ dmg_correct }},
+    dmgWrong: {{ dmg_wrong }}
+  };
+</script>
+<script src="{% static 'js/boss-battle.js' %}?v=3" defer></script>
+{% endblock %}

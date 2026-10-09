@@ -10,12 +10,18 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from accounts.decorators import student_required, teacher_required
-from courses.models import Course, Enrollment, Lesson
+from courses.models import Course, Enrollment, Lesson, VideoProgress
 from oopelearn.ai import ask_ai
 
 from .docx_import import parse_pretest_bank
 from .forms import QuestionForm
-from .models import Attempt, Choice, Question, Quiz
+from .models import Attempt, BossBattleResult, Choice, Question, Quiz
+
+BOSS_BATTLE_QUESTION_LIMIT = 8
+BOSS_BATTLE_BOSS_HP = 100
+BOSS_BATTLE_STUDENT_HP = 100
+BOSS_BATTLE_DAMAGE_PER_CORRECT = 20
+BOSS_BATTLE_DAMAGE_PER_WRONG = 20
 
 PRETEST_DOCX_RELPATH = 'pretest/pretest.docx'
 
@@ -306,6 +312,129 @@ def attempt_ai_summary(request, pk):
     if not ok:
         return JsonResponse({'error': text}, status=502)
     return JsonResponse({'summary': text})
+
+
+def boss_battle_question_pool(lesson):
+    return list(
+        Question.objects.filter(quiz__lesson=lesson, quiz__kind__in=[Quiz.Kind.PRETEST, Quiz.Kind.INVIDEO])
+        .prefetch_related('choices')
+        .order_by('?')[:BOSS_BATTLE_QUESTION_LIMIT]
+    )
+
+
+@student_required
+def boss_battle_hub(request):
+    student = request.user
+    enrolled_courses = Course.objects.filter(enrollments__student=student)
+    lessons = list(
+        Lesson.objects.filter(
+            course__in=enrolled_courses, quizzes__kind__in=[Quiz.Kind.PRETEST, Quiz.Kind.INVIDEO],
+        ).distinct().select_related('course')
+    )
+    lessons.sort(key=lambda l: (
+        l.course.unit_number is None, l.course.unit_number or 0, l.course.created_at, l.order,
+    ))
+
+    progress_by_lesson = {
+        vp.lesson_id: vp
+        for vp in VideoProgress.objects.filter(student=student, lesson__in=lessons)
+    }
+    result_by_lesson = {
+        r.lesson_id: r
+        for r in BossBattleResult.objects.filter(student=student, lesson__in=lessons)
+    }
+
+    stages = []
+    for idx, lesson in enumerate(lessons, 1):
+        progress = progress_by_lesson.get(lesson.id)
+        result = result_by_lesson.get(lesson.id)
+        stages.append({
+            'number': idx,
+            'lesson': lesson,
+            'locked': not (progress and progress.completed),
+            'won': bool(result and result.won),
+            'play_count': result.play_count if result else 0,
+        })
+
+    return render(request, 'exams/boss_battle_hub.html', {'stages': stages})
+
+
+@student_required
+def boss_battle_play(request, lesson_id):
+    lesson = _get_enrolled_lesson(request, lesson_id)
+    progress = VideoProgress.objects.filter(student=request.user, lesson=lesson).first()
+    if not progress or not progress.completed:
+        raise PermissionDenied('กรุณาดูวิดีโอบทเรียนนี้ให้ครบก่อนปราบบอส')
+
+    questions = boss_battle_question_pool(lesson)
+    if not questions:
+        raise PermissionDenied('บทเรียนนี้ยังไม่มีคลังคำถามสำหรับด่านบอส')
+
+    questions_payload = [
+        {
+            'id': q.id,
+            'text': q.text,
+            'choices': [{'id': c.id, 'text': c.text} for c in q.choices.all()],
+        }
+        for q in questions
+    ]
+
+    result = BossBattleResult.objects.filter(student=request.user, lesson=lesson).first()
+
+    return render(request, 'exams/boss_battle.html', {
+        'lesson': lesson,
+        'questions_payload': questions_payload,
+        'result': result,
+        'boss_hp': BOSS_BATTLE_BOSS_HP,
+        'student_hp': BOSS_BATTLE_STUDENT_HP,
+        'dmg_correct': BOSS_BATTLE_DAMAGE_PER_CORRECT,
+        'dmg_wrong': BOSS_BATTLE_DAMAGE_PER_WRONG,
+    })
+
+
+@student_required
+@require_POST
+def boss_battle_answer(request, lesson_id):
+    lesson = _get_enrolled_lesson(request, lesson_id)
+    try:
+        payload = json.loads(request.body)
+        question_id = int(payload.get('question_id'))
+        choice_id = int(payload.get('choice_id'))
+    except (ValueError, TypeError, json.JSONDecodeError):
+        return JsonResponse({'error': 'invalid payload'}, status=400)
+
+    question = get_object_or_404(
+        Question, pk=question_id, quiz__lesson=lesson, quiz__kind__in=[Quiz.Kind.PRETEST, Quiz.Kind.INVIDEO],
+    )
+    choice = get_object_or_404(Choice, pk=choice_id, question=question)
+    correct_choice = question.choices.filter(is_correct=True).first()
+    return JsonResponse({
+        'is_correct': choice.is_correct,
+        'correct_choice_id': correct_choice.id if correct_choice else None,
+        'correct_choice_text': correct_choice.text if correct_choice else '',
+    })
+
+
+@student_required
+@require_POST
+def boss_battle_finish(request, lesson_id):
+    lesson = _get_enrolled_lesson(request, lesson_id)
+    try:
+        payload = json.loads(request.body)
+        won = bool(payload.get('won'))
+        boss_hp_left = max(0, int(payload.get('boss_hp_left', 0)))
+    except (ValueError, TypeError, json.JSONDecodeError):
+        return JsonResponse({'error': 'invalid payload'}, status=400)
+
+    result, _ = BossBattleResult.objects.get_or_create(student=request.user, lesson=lesson)
+    result.play_count += 1
+    if won and (not result.won or boss_hp_left < result.best_boss_hp_left):
+        result.best_boss_hp_left = boss_hp_left
+    if won:
+        result.won = True
+    result.save()
+
+    return JsonResponse({'won': result.won, 'best_boss_hp_left': result.best_boss_hp_left})
 
 
 @student_required
