@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}วิชาของฉัน{% endblock %}
+{% block heading %}ภาพรวมการสอน{% endblock %}
 {% block content %}
 
 <div class="dash-hero">
@@ -12,9 +13,7 @@
       <a href="{% url 'exams:pretest_import' %}" class="btn btn-outline-light btn-sm fw-semibold"><i class="bi bi-clipboard2-check"></i> เพิ่มแบบทดสอบก่อนเรียน</a>
     </div>
   </div>
-  <div class="dash-hero-art">
-    <i class="bi bi-mortarboard-fill"></i>
-  </div>
+  {% include '_workspace_cube.html' %}
 </div>
 
 <div class="row g-3 dash-stats">
@@ -44,6 +43,10 @@
 <div class="dash-section-head">
   <h3 class="fw-bold mb-0">วิชาของฉัน</h3>
   <span class="text-secondary small">{{ courses|length }} รายวิชา</span>
+</div>
+<div class="workspace-course-toolbar mb-4">
+  <span class="workspace-eyebrow">YOUR COURSES · สร้างความเป็นไปได้ใหม่</span>
+  <label class="dash-search"><i class="bi bi-search" aria-hidden="true"></i><input class="form-control" id="dashCourseSearch" type="search" placeholder="ค้นหารายวิชา…" aria-label="ค้นหารายวิชา"></label>
 </div>
 
 <div class="row g-4" id="dashCourseGrid">

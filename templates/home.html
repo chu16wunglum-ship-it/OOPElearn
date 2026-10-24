@@ -1,41 +1,78 @@
-{% extends 'base.html' %}
-{% block title %}หน้าแรก{% endblock %}
-{% block public_content %}
-<div class="hero mb-5">
-  <span class="hero-badge"><i class="bi bi-stars"></i> บทเรียนช่วยสอนออนไลน์</span>
-  <h1 class="display-heading fw-bold mt-3" style="font-size:2.6rem;">OOPElearn</h1>
-  <p class="fs-5 text-secondary mb-1">ระบบบทเรียนช่วยสอนวิชา <strong>การเขียนโปรแกรมเชิงวัตถุเบื้องต้น</strong></p>
-  <p class="text-secondary mb-4" style="max-width:640px;">
-    ครูสร้างบทเรียน วิดีโอ และแบบทดสอบก่อน–หลังเรียนได้ในที่เดียว พร้อมติดตามว่านักเรียนดูวิดีโอถึงไหน
-    และมีคำถามแทรกกลางวิดีโอเพื่อกระตุ้นความเข้าใจระหว่างเรียน
-  </p>
-  <div class="d-flex gap-2 flex-wrap">
-    <a href="{% url 'accounts:register_teacher' %}" class="btn btn-lg btn-primary px-4"><i class="bi bi-mortarboard"></i> สมัครเป็นครูผู้สอน</a>
-    <a href="{% url 'accounts:login' %}" class="btn btn-lg btn-outline-primary px-4"><i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ</a>
-  </div>
-</div>
-
-<div class="row g-4">
-  <div class="col-md-4">
-    <div class="card h-100 p-4">
-      <div class="fs-2 text-primary mb-2"><i class="bi bi-clipboard2-check"></i></div>
-      <h5 class="fw-semibold">แบบทดสอบก่อน–หลังเรียน</h5>
-      <p class="text-secondary mb-0">ครูออกแบบข้อสอบปรนัยได้อิสระ ระบบตรวจให้คะแนนอัตโนมัติและสรุปผลรายบุคคล</p>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card h-100 p-4">
-      <div class="fs-2 text-primary mb-2"><i class="bi bi-camera-reels"></i></div>
-      <h5 class="fw-semibold">วิดีโอพร้อมคำถามแทรก</h5>
-      <p class="text-secondary mb-0">ฝังวิดีโอ YouTube และตั้งคำถามให้ปรากฏ ณ วินาทีที่กำหนด เพื่อเช็คความเข้าใจระหว่างดู</p>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card h-100 p-4">
-      <div class="fs-2 text-primary mb-2"><i class="bi bi-graph-up-arrow"></i></div>
-      <h5 class="fw-semibold">ติดตามความก้าวหน้า</h5>
-      <p class="text-secondary mb-0">ดูว่านักเรียนแต่ละคนดูวิดีโอถึงไหน พร้อมสรุปคะแนนแบบทดสอบทุกบทเรียนในหน้าเดียว</p>
-    </div>
-  </div>
-</div>
-{% endblock %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="เรียนรู้การเขียนโปรแกรมเชิงวัตถุเบื้องต้น ตั้งแต่แนวคิด OOP และภาษา C# สู่การสร้างแอปพลิเคชันและประยุกต์ใช้ในงานธุรกิจ กับ OOPElearn">
+  <meta name="theme-color" content="#4f46e5">
+  <title>OOPElearn — เปลี่ยนไอเดียให้เป็นโปรแกรม</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%234f46e5'/%3E%3Ctext x='10' y='44' font-size='34' fill='%23ffffff'%3E{%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="{% static 'css/home.css' %}">
+  <link rel="stylesheet" href="{% static 'css/lesson-preview.css' %}">
+  <script src="{% static 'js/home.js' %}" defer></script>
+  <script src="{% static 'js/lesson-preview.js' %}" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">ข้ามไปยังเนื้อหา</a>
+  <header class="site-header">
+    <nav class="wrap navigation" aria-label="เมนูหลัก">
+      <a href="{% url 'home' %}" class="brand" aria-label="OOPElearn หน้าแรก"><span class="brand-mark">{<span>o</span>}</span> OOP<span class="brand-light">Elearn</span><span class="brand-dot"></span></a>
+      <div class="nav-links"><a href="#curriculum">สำรวจบทเรียน</a><a href="#lesson-preview">ตัวอย่างบทเรียน</a><a href="#experience">วิธีการเรียนรู้</a></div>
+      <a class="nav-login" href="{% url 'accounts:login' %}">เข้าสู่ระบบ <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+  <main id="main">
+    {% if messages %}<div class="wrap notices">{% for message in messages %}<p role="status">{{ message }}</p>{% endfor %}</div>{% endif %}
+    <section class="hero wrap" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="status-dot"></span> YOUR NEXT CHAPTER STARTS HERE</div>
+        <h1 id="hero-title">ไอเดียของคุณ<br>เป็นได้มากกว่า<br><span class="hero-highlight">แค่จินตนาการ<span class="spark" aria-hidden="true">✳</span></span></h1>
+        <p class="hero-description">เปิดโลกการเขียนโปรแกรมเชิงวัตถุ เรียนรู้ C#<br class="desktop-break"> ตั้งแต่พื้นฐาน สู่การสร้างแอปที่ใช้งานได้จริง<br>ทีละบท ทีละก้าว ในจังหวะของคุณ</p>
+        <div class="hero-actions"><a href="#curriculum" class="button button-primary">สำรวจบทเรียน <span aria-hidden="true">↗</span></a><a href="#lesson-preview" class="text-link">ชมตัวอย่างบทเรียน <span aria-hidden="true">▷</span></a></div>
+        <div class="hero-caption"><span class="tiny-orbit" aria-hidden="true">◎</span> เรียนรู้ผ่านวิดีโอ · ฝึกคิดผ่านแบบทดสอบ · เห็นพัฒนาการของตัวเอง</div>
+      </div>
+      <div class="hero-art" aria-label="ภาพจำลองสามมิติของคลาสและวัตถุในภาษา C#" role="img">
+        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="art-grid"></div>
+        <div class="floating-label label-top"><span class="status-dot"></span> MAKE IDEAS OBJECTS.</div>
+        <div class="cube-stage"><div class="object-cube"><div class="cube-face cube-front"><span class="cube-small">Object-oriented</span><strong>C#</strong><span class="cube-bottom">a world of possibilities ↗</span></div><div class="cube-face cube-right"><span>{ }</span></div><div class="cube-face cube-top"><span>OOPElearn</span></div></div></div>
+        <div class="code-window"><div class="window-bar"><span></span><span></span><span></span><small>your-first-idea.cs</small></div><pre><span class="code-purple">class</span> <span class="code-accent">YourFuture</span> {
+  <span class="code-purple">public void</span> <span class="code-accent">Build</span>() {
+    Learn();
+    Create();
+    <span class="code-muted">// Make it happen.</span>
+  }
+}</pre><div class="code-footer"><span>●</span> พร้อมสร้างสิ่งใหม่ไปด้วยกัน</div></div>
+        <div class="mini-object mini-one">{ }</div><div class="mini-object mini-two">✳</div>
+        <div class="art-footnote"><span>01 — THINK IN OBJECTS</span><span>EXPLORE IN 3D ↗</span></div>
+      </div>
+    </section>
+    <div class="subject-strip"><div class="wrap strip-content"><span>SMALL STEPS. REAL SKILLS.</span><span>OOP <i>✳</i> C# <i>✳</i> .NET <i>✳</i> WINDOWS FORMS</span><span>เรียนรู้ · ลงมือทำ · เติบโต ↗</span></div></div>
+    {% include '_lesson_preview.html' %}
+    <section id="curriculum" class="curriculum wrap" aria-labelledby="curriculum-title">
+      <div class="section-top"><div><div class="eyebrow muted">THE LEARNING PATH</div><h2 id="curriculum-title">ทุกก้าว พาคุณ<span class="serif-accent">ไปได้ไกลขึ้น.</span></h2><p>ต่อยอดความเข้าใจจากแนวคิดแรก สู่โปรแกรมแรกของคุณ</p></div><span class="count-pill">{{ catalog|length|stringformat:'02d' }} {% if has_live_courses %}คอร์สในระบบ{% else %}หน่วยการเรียนรู้{% endif %} <span>↙</span></span></div>
+      {% if not has_live_courses %}<p class="preview-note"><span class="status-dot"></span> สำรวจเนื้อหาจากเอกสารประกอบรายวิชา · คอร์สสำหรับเข้าเรียนจะแสดงเมื่อผู้สอนเพิ่มในระบบ</p>{% endif %}
+      <div class="catalog-tools"><div class="catalog-label"><span class="selected-marker"></span> บทเรียนทั้งหมด <span class="results-count">{{ catalog|length }}</span></div><label class="search-box"><span aria-hidden="true">⌕</span><input id="course-search" type="search" placeholder="ค้นหาบทเรียนที่สนใจ…" aria-label="ค้นหาบทเรียน"><kbd>/</kbd></label></div>
+      <div class="course-grid">
+        {% for course in catalog %}
+        <article class="course-card theme-{% cycle 'mint' 'lavender' 'peach' 'blue' 'pink' 'yellow' %}" data-course-card>
+          <div class="card-art" aria-hidden="true"><span class="art-unit">UNIT {{ course.number|stringformat:'02d' }}</span><span class="card-art-arrow">↗</span><div class="card-grid"></div><div class="lesson-object"><div class="object-top"></div><div class="object-side"></div><div class="object-front">{{ course.symbol }}</div></div><span class="art-corner">LEARN. BUILD. REPEAT.</span></div>
+          <div class="card-content"><span class="course-tag">{{ course.tag }}</span><h3>{{ course.title }}</h3><p class="course-description">{{ course.description|default:'สำรวจเนื้อหาและบทเรียนในรายวิชานี้ พร้อมเรียนรู้ไปทีละขั้นตอน'|truncatechars:180 }}</p>
+            <details class="course-topics"><summary>สำรวจเนื้อหา <span aria-hidden="true">+</span></summary><ul>{% for topic in course.topics %}<li>{{ topic }}</li>{% empty %}<li>ผู้สอนกำลังเตรียมเนื้อหาบทเรียน</li>{% endfor %}</ul></details>
+            <div class="card-bottom"><span>{% if course.is_live %}{{ course.topics|length }} บทเรียน{% else %}เนื้อหาประกอบรายวิชา{% endif %}</span><a href="{% url 'accounts:login' %}" aria-label="เข้าสู่ระบบเพื่อเรียน {{ course.title }}">เข้าสู่ระบบเพื่อเรียน <span aria-hidden="true">↗</span></a></div>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      <p class="empty-search" id="empty-search" hidden role="status">ไม่พบบทเรียนที่ค้นหา ลองใช้คำว่า C# หรือ โปรแกรม</p>
+      <p class="search-status" id="search-status" aria-live="polite"></p>
+    </section>
+    <section id="experience" class="experience wrap" aria-labelledby="experience-title">
+      <div class="experience-intro"><div class="eyebrow muted">MORE THAN JUST WATCHING</div><h2 id="experience-title">เข้าใจด้วยการเรียนรู้<br><span>เติบโตด้วยการลงมือทำ</span></h2><p>พื้นที่เรียนรู้ที่ให้คุณได้คิด ลอง และเห็นความก้าวหน้า<br>ในทุกบทเรียน</p><a href="{% url 'accounts:login' %}" class="text-link">เริ่มเส้นทางของคุณ <span aria-hidden="true">↗</span></a></div>
+      <div class="feature-list"><div class="feature"><span class="feature-icon">▷</span><div><span class="feature-number">01 / WATCH & LEARN</span><h3>ดูให้เข้าใจ ไม่ใช่แค่ดูให้จบ</h3><p>เรียนผ่านวิดีโอพร้อมคำถามระหว่างเรียน ช่วยทบทวนความเข้าใจในจังหวะที่สำคัญ</p></div></div><div class="feature"><span class="feature-icon">{ }</span><div><span class="feature-number">02 / TEST YOUR THINKING</span><h3>ท้าทายความรู้ที่เพิ่งค้นพบ</h3><p>ทดสอบก่อนและหลังเรียน พร้อมด่านปราบบอสให้คุณได้ฝึกใช้สิ่งที่เรียนรู้</p></div></div><div class="feature"><span class="feature-icon">↗</span><div><span class="feature-number">03 / SEE YOUR GROWTH</span><h3>ทุกความพยายาม มองเห็นได้</h3><p>ติดตามการดูวิดีโอและคะแนนของตัวเอง เพื่อรู้ว่าเข้าใจแล้ว และจะไปต่อที่ตรงไหน</p></div></div></div>
+    </section>
+    <section class="join-section wrap"><div class="join-card"><span class="join-spark" aria-hidden="true">✳</span><div><div class="eyebrow">FROM YOUR FIRST LINE TO WHAT'S NEXT.</div><h2>โค้ดบรรทัดแรกของคุณ<br>อาจเป็นจุดเริ่มต้นของสิ่งที่ยิ่งใหญ่</h2><p>เริ่มเรียนรู้วันนี้ แล้วมาสร้างความเป็นไปได้ใหม่ไปด้วยกัน</p></div><div class="join-actions"><a class="button button-dark" href="{% url 'accounts:login' %}">เข้าสู่ระบบเพื่อเริ่มเรียน <span aria-hidden="true">↗</span></a><a href="{% url 'accounts:register_teacher' %}">เป็นผู้สอน? สมัครสร้างบทเรียน <span aria-hidden="true">→</span></a></div></div></section>
+  </main>
+  <footer class="wrap footer"><a href="{% url 'home' %}" class="brand"><span class="brand-mark">{<span>o</span>}</span> OOP<span class="brand-light">Elearn</span></a><p>บทเรียนช่วยสอนวิชาการเขียนโปรแกรมเชิงวัตถุเบื้องต้น</p><a href="#main">กลับด้านบน ↑</a></footer>
+</body>
+</html>

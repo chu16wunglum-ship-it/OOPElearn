@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% block title %}สมัครครูผู้สอน{% endblock %}
 {% block public_content %}
+<div class="workspace-auth-layout">
+  <section class="workspace-auth-intro"><span class="workspace-eyebrow">INSPIRE THE NEXT CHAPTER</span><h1>ส่งต่อความรู้<br>สร้างนักพัฒนารุ่นใหม่</h1><p>พื้นที่เรียนรู้การเขียนโปรแกรมเชิงวัตถุ<br>จากโค้ดบรรทัดแรก สู่ความเป็นไปได้ใหม่</p>{% include '_workspace_cube.html' %}<span class="workspace-auth-tag">OOP <span>✳</span> C# <span>✳</span> .NET</span></section>
 <div class="card auth-card p-4">
   <h4 class="fw-bold mb-1"><i class="bi bi-mortarboard text-primary"></i> สมัครเป็นครูผู้สอน</h4>
   <p class="text-secondary small mb-4">สร้างบัญชีเพื่อเริ่มสร้างบทเรียนและแบบทดสอบ</p>
@@ -39,5 +41,6 @@
   <p class="text-center small text-secondary mt-3 mb-0">
     มีบัญชีแล้ว? <a href="{% url 'accounts:login' %}">เข้าสู่ระบบ</a>
   </p>
+</div>
 </div>
 {% endblock %}

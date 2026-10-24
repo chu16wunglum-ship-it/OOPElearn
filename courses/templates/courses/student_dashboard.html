@@ -2,6 +2,16 @@
 {% block title %}บทเรียนของฉัน{% endblock %}
 {% block heading %}<i class="bi bi-journal-bookmark-fill"></i> บทเรียนของฉัน{% endblock %}
 {% block content %}
+<div class="dash-hero">
+  <div class="dash-hero-text">
+    <span class="workspace-eyebrow">YOUR NEXT CHAPTER STARTS HERE</span>
+    <h2 class="dash-hero-title">พร้อมสร้างสิ่งใหม่หรือยัง,<br>{{ user.first_name|default:user.username }}?</h2>
+    <p class="dash-hero-sub">เรียนรู้ทีละบท ลงมือทำทีละก้าว<br>ให้ทุกไอเดียของคุณกลายเป็นจริง</p>
+    <div class="dash-hero-actions"><a href="#student-courses" class="btn btn-light fw-semibold">ไปยังบทเรียน <i class="bi bi-arrow-down-right" aria-hidden="true"></i></a><a href="{% url 'exams:boss_battle_hub' %}" class="btn btn-outline-light">ท้าทายด่านปราบบอส <i class="bi bi-lightning-charge" aria-hidden="true"></i></a></div>
+  </div>
+  {% include '_workspace_cube.html' %}
+</div>
+<div class="dash-section-head" id="student-courses"><h3 class="fw-bold mb-0">เส้นทางการเรียนรู้ของคุณ</h3><span class="text-secondary small">{{ enrollments|length }} รายวิชา</span></div>
 
 <div class="row g-4">
   {% for enrollment in enrollments %}
